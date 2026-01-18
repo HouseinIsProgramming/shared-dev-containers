@@ -1,0 +1,30 @@
+{
+  "category": "Uncategorized",
+  "description": "Verify the use case of the project. Other things that do not make any sense: just make a report file for this ",
+  "title": "Verify project use case and create report",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "skip",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "in_progress",
+  "id": "feature-1768711277819-a1a8ug8ke",
+  "descriptionHistory": [
+    {
+      "description": "Verify the use case of the project. Other things that do not make any sense: just make a report file for this ",
+      "timestamp": "2026-01-18T04:41:17.848Z",
+      "source": "initial"
+    }
+  ],
+  "branchName": "main",
+  "startedAt": "2026-01-18T04:41:19.457Z",
+  "updatedAt": "2026-01-18T04:41:19.604Z"
+}

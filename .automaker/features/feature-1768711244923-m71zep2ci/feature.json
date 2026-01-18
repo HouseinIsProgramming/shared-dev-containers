@@ -1,0 +1,31 @@
+{
+  "category": "Uncategorized",
+  "description": "Verify the readme again and make it simplified and account for the new features that were just added. ",
+  "title": "Update README with simplified content and new features",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "skip",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "waiting_approval",
+  "id": "feature-1768711244923-m71zep2ci",
+  "descriptionHistory": [
+    {
+      "description": "Verify the readme again and make it simplified and account for the new features that were just added. ",
+      "timestamp": "2026-01-18T04:40:44.960Z",
+      "source": "initial"
+    }
+  ],
+  "branchName": "main",
+  "startedAt": "2026-01-18T04:40:46.457Z",
+  "updatedAt": "2026-01-18T04:42:14.446Z",
+  "justFinishedAt": "2026-01-18T04:42:14.446Z"
+}

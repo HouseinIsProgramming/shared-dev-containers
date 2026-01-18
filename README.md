@@ -1,219 +1,141 @@
 # shared-dev-containers (sdc)
 
-A powerful CLI tool for managing preconfigured devcontainer configurations across multiple projects. Define shared base templates while allowing individual projects to customize them for their specific needs.
-
-## Table of Contents
-
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Commands](#commands)
-  - [init](#sdc-init)
-  - [update](#sdc-update)
-  - [template](#sdc-template)
-  - [repo-template](#sdc-repo-template)
-  - [sync](#sdc-sync)
-  - [scaffold](#sdc-scaffold)
-  - [wizard](#sdc-wizard)
-- [Built-in Templates](#built-in-templates)
-- [Configuration](#configuration)
-- [How It Works](#how-it-works)
-- [Advanced Features](#advanced-features)
-- [Development](#development)
-- [License](#license)
-
-## Features
-
-- **Shared Base Templates**: Define common devcontainer configurations that can be used across multiple projects
-- **Project Customization**: Each project can extend and customize the base configuration
-- **Automatic Merging**: Changes to base templates can be synced to all projects
-- **Built-in Templates**: Comes with templates for Node.js, Bun, Python, and a Claude + zsh4humans setup
-- **Project Analysis**: Auto-detect project type and recommend appropriate templates
-- **Remote Template Repositories**: Fetch and manage templates from Git repositories
-- **Conflict Detection**: Identify and resolve configuration conflicts between templates
-- **Interactive Wizard**: Guided setup for new users
-- **Project Scaffolding**: Create new projects with complete devcontainer setup
-- **CLI Tool**: Easy-to-use command line interface for managing devcontainers
-
-## Prerequisites
-
-Before installing, ensure you have one of the following:
-
-- **Node.js** >= 22.0.0
-- **Bun** >= 1.0.0 (recommended for better performance)
+A CLI tool for managing shared devcontainer configurations across projects. Define base templates and customize them per-project while keeping everything in sync.
 
 ## Installation
 
-### Using Bun (recommended)
-
 ```bash
+# Using npm
+npm install -g shared-dev-containers
+
+# Using Bun (recommended)
 bun install -g shared-dev-containers
 ```
 
-### Using npm
-
-```bash
-npm install -g shared-dev-containers
-```
-
-### Verify Installation
-
-```bash
-sdc --version
-sdc --help
-```
+**Requirements:** Node.js >= 22.0.0 or Bun >= 1.0.0
 
 ## Quick Start
 
-### 1. Initialize global configuration
-
 ```bash
-sdc init --global
+# Run the interactive wizard (easiest way to get started)
+sdc wizard
+
+# Or initialize manually
+sdc init --global              # Set up global config
+sdc init --auto                # Initialize project with auto-detection
 ```
 
-This creates the global configuration directory at `~/.shared-dev-containers/` with default templates.
+## Core Commands
 
-### 2. Initialize a project
+| Command | Description |
+|---------|-------------|
+| `sdc wizard` | Interactive setup wizard |
+| `sdc init` | Initialize global config or project |
+| `sdc update` | Regenerate devcontainer.json from template + customizations |
+| `sdc sync` | Update all projects to latest template |
+| `sdc scaffold <dir>` | Create a new project with full setup |
+| `sdc analyze` | Analyze project type and get recommendations |
 
-```bash
-cd your-project
-sdc init --name my-project --template node
-```
+## Built-in Templates
 
-Or use auto-detection to recommend a template based on your project:
+| Template | Description |
+|----------|-------------|
+| `base` | Ubuntu with zsh, git, GitHub CLI, Docker-in-Docker |
+| `node` | Node.js 22 with ESLint, Prettier |
+| `bun` | Bun runtime with TypeScript |
+| `python` | Python 3.12 with Black, Ruff, Pylance |
+| `claude-zsh` | zsh4humans + Claude Code + Docker-in-Docker |
 
-```bash
-sdc init --auto
-```
+## Features
 
-This creates a `.devcontainer/` directory with:
-- `devcontainer.json` - The merged devcontainer configuration
-- `sdc.json` - Project-specific customizations
+### Project Customization
 
-### 3. Customize your project
-
-Edit `.devcontainer/sdc.json` to add project-specific settings:
+Each project gets an `sdc.json` file for customizations:
 
 ```json
 {
   "name": "my-project",
   "extends": "node",
-  "features": {
-    "ghcr.io/devcontainers/features/aws-cli:1": {}
-  },
-  "extensions": [
-    "amazonwebservices.aws-toolkit-vscode"
-  ],
-  "env": {
-    "NODE_ENV": "development"
-  },
+  "features": { "ghcr.io/devcontainers/features/aws-cli:1": {} },
+  "extensions": ["amazonwebservices.aws-toolkit-vscode"],
+  "env": { "NODE_ENV": "development" },
   "ports": [4000],
-  "postCreateCommands": [
-    "npm run setup"
-  ]
+  "postCreateCommands": ["npm run setup"]
 }
 ```
 
-### 4. Update devcontainer.json
+### User Customizations
+
+Apply personal dotfiles and shell config to all your devcontainers:
 
 ```bash
-sdc update
+sdc customize dotfiles https://github.com/user/dotfiles.git
+sdc customize shell ~/.zshrc
+sdc customize env EDITOR vim
+sdc customize show                # View current customizations
 ```
 
-This regenerates `devcontainer.json` by merging the base template with your project customizations.
+### Remote Template Repositories
 
-## Commands
+Share templates across your team via Git:
+
+```bash
+sdc repo add company https://github.com/company/templates.git
+sdc repo sync
+sdc init --template company/backend-service
+```
+
+### Dry-Run Mode
+
+Preview changes before applying:
+
+```bash
+sdc update --dry-run
+sdc sync --dry-run
+```
+
+## Command Reference
+
+### `sdc wizard`
+
+Interactive configuration wizard.
+
+```bash
+sdc wizard                    # Full interactive wizard
+sdc wizard --quick            # Quick setup with defaults
+sdc wizard --quick --template node
+```
 
 ### `sdc init`
 
-Initialize shared-dev-containers globally or for a specific project.
+Initialize global configuration or a project.
 
 ```bash
-# Initialize global configuration
-sdc init --global
-
-# Initialize a project with a specific template
-sdc init --name my-project --template node
-
-# Auto-detect project type and suggest template
-sdc init --auto
-
-# Initialize with default template
-sdc init
+sdc init --global             # Initialize global config
+sdc init                      # Initialize current directory
+sdc init --auto               # Auto-detect project type
+sdc init --template node      # Use specific template
+sdc init --name my-project    # Set project name
 ```
-
-**Options:**
-- `--global`, `-g`: Initialize global configuration
-- `--name`, `-n`: Project name
-- `--template`, `-t`: Base template to use
-- `--auto`, `-a`: Auto-detect project type and recommend template
 
 ### `sdc update`
 
-Update project's devcontainer.json from base template and project config.
+Regenerate `devcontainer.json` by merging template with project customizations.
 
 ```bash
-sdc update
+sdc update                    # Update current project
+sdc update --dry-run          # Preview changes only
 ```
-
-### `sdc template`
-
-Manage local templates.
-
-```bash
-# List available templates
-sdc template list
-
-# Get template details
-sdc template get node
-
-# Create a new template
-sdc template create my-custom-template
-
-# Delete a template
-sdc template delete my-custom-template
-```
-
-### `sdc repo-template`
-
-Manage remote Git-based template repositories.
-
-```bash
-# Add a remote template repository
-sdc repo-template add my-repo https://github.com/org/devcontainer-templates.git
-
-# Add with authentication
-sdc repo-template add my-repo https://github.com/org/private-templates.git --token <token>
-
-# List configured repositories
-sdc repo-template list
-
-# Sync templates from remote repositories
-sdc repo-template sync
-
-# Remove a repository
-sdc repo-template remove my-repo
-```
-
-**Options:**
-- `--token`, `-t`: Personal access token for private repositories
-- `--branch`, `-b`: Specify branch to use (default: main)
-- `--auto-sync`: Enable automatic syncing
 
 ### `sdc sync`
 
-Sync all projects in a directory to the latest base template.
+Sync all projects in a directory to latest template.
 
 ```bash
-# Sync all projects in current directory
-sdc sync
-
-# Sync projects in a specific directory
-sdc sync ~/projects
-
-# Check which projects need syncing (dry-run)
-sdc sync check
+sdc sync                      # Sync projects in current directory
+sdc sync ~/projects           # Sync projects in specific directory
+sdc sync check                # Check which projects need syncing
+sdc sync --dry-run            # Preview changes only
 ```
 
 ### `sdc scaffold`
@@ -221,91 +143,90 @@ sdc sync check
 Create a new project with complete devcontainer setup.
 
 ```bash
-# Scaffold a new project
-sdc scaffold my-new-project --template node
-
-# Scaffold with git initialization
-sdc scaffold my-project --template bun --git
-
-# Scaffold and install dependencies
-sdc scaffold my-project --template python --install
-
-# Open in VS Code after scaffolding
-sdc scaffold my-project --template node --code
+sdc scaffold ./my-app --template node
+sdc scaffold ./api --template python --skip-vscode
+sdc scaffold ./service --template bun --skip-git
 ```
 
-**Options:**
-- `--template`, `-t`: Base template to use
-- `--git`, `-g`: Initialize git repository
-- `--install`, `-i`: Install project dependencies
-- `--code`, `-c`: Open in VS Code after creation
-- `--container`: Run installation inside container
+### `sdc template`
 
-### `sdc wizard`
-
-Interactive setup wizard for guided configuration.
+Manage local templates.
 
 ```bash
-# Start the interactive wizard
-sdc wizard
-
-# Quick wizard mode
-sdc wizard --quick
+sdc template list             # List available templates
+sdc template get node         # Show template details
+sdc template create my-tmpl   # Create custom template
+sdc template delete my-tmpl   # Delete template
 ```
 
-The wizard guides you through:
-- Global vs project initialization
-- Template selection
-- Project configuration
-- Feature and extension selection
+### `sdc repo`
 
-## Built-in Templates
+Manage remote Git template repositories.
 
-### `base`
-Basic Ubuntu container with zsh, git, GitHub CLI, and Docker-in-Docker.
+```bash
+sdc repo add name url         # Add remote repository
+sdc repo add name url --auth ssh --branch develop
+sdc repo remove name          # Remove repository
+sdc repo list                 # List repositories
+sdc repo sync                 # Sync all repositories
+sdc repo get repo-name tmpl   # Get specific template
+```
 
-### `node`
-Node.js 22 with npm, ESLint, Prettier, and common web development extensions.
+### `sdc customize`
 
-### `bun`
-Bun runtime with TypeScript support.
+Manage personal customizations applied to all devcontainers.
 
-### `python`
-Python 3.12 with Black formatter, Ruff linter, and Pylance.
+```bash
+# Dotfiles
+sdc customize dotfiles https://github.com/user/dotfiles.git
+sdc customize dotfiles https://... --install "./install.sh"
+sdc customize dotfiles --remove
 
-### `claude-zsh`
-Ubuntu container with:
-- [zsh4humans](https://github.com/romkatv/zsh4humans) - Modern zsh configuration
-- [Claude Code](https://claude.com/claude-code) - AI-powered coding assistant
-- Docker-in-Docker for container workflows
+# Shell config
+sdc customize shell ~/.zshrc
+sdc customize shell ~/.zshrc --target ~/.zshrc
+sdc customize shell --remove
 
-## Configuration
+# Environment variables
+sdc customize env MY_VAR value
+sdc customize env MY_VAR --remove
 
-### Global Config
+# View/clear
+sdc customize show
+sdc customize clear
+```
 
-Located at `~/.shared-dev-containers/config.json`:
+### `sdc analyze`
+
+Analyze project and suggest template/customizations.
+
+```bash
+sdc analyze                   # Analyze current directory
+sdc analyze ./my-project      # Analyze specific directory
+```
+
+## Configuration Files
+
+### Global Config (`~/.shared-dev-containers/config.json`)
 
 ```json
 {
-  "templatesDir": "/home/user/.shared-dev-containers/templates",
+  "templatesDir": "~/.shared-dev-containers/templates",
   "defaultImage": "mcr.microsoft.com/devcontainers/base:ubuntu",
-  "defaultFeatures": {
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "installZsh": true,
-      "configureZshAsDefaultShell": true
-    }
+  "userCustomizations": {
+    "dotfilesRepo": "https://github.com/user/dotfiles.git",
+    "shellConfigSource": "~/.zshrc",
+    "customEnvVars": { "EDITOR": "vim" }
   }
 }
 ```
 
-### Project Config
-
-Located at `.devcontainer/sdc.json`:
+### Project Config (`.devcontainer/sdc.json`)
 
 ```json
 {
   "name": "project-name",
-  "extends": "base",
+  "extends": "node",
   "features": {},
   "extensions": [],
   "env": {},
@@ -315,148 +236,24 @@ Located at `.devcontainer/sdc.json`:
 }
 ```
 
-### Configuration Options
-
-| Option | Description |
-|--------|-------------|
-| `name` | Project identifier |
-| `extends` | Base template to extend |
-| `features` | Additional devcontainer features to include |
-| `extensions` | VS Code extensions to install |
-| `env` | Environment variables |
-| `ports` | Ports to forward |
-| `postCreateCommands` | Commands to run after container creation |
-| `overrides` | Direct overrides for devcontainer.json fields |
-
 ## How It Works
 
-1. **Base Templates**: Define reusable devcontainer configurations stored globally at `~/.shared-dev-containers/templates/`
-
-2. **Project Configuration**: Each project has an `sdc.json` that specifies:
-   - Which base template to extend
-   - Additional features to add
-   - VS Code extensions
-   - Environment variables
-   - Port forwards
-   - Post-create commands
-   - Direct overrides
-
-3. **Merging**: When you run `sdc update`, the tool:
-   - Loads the base template
-   - Applies project-specific additions
-   - Generates the final `devcontainer.json`
-
-4. **Syncing**: When base templates are updated, run `sdc sync` to propagate changes to all projects
-
-## Advanced Features
-
-### Project Type Auto-Detection
-
-The analyzer can detect various project types and frameworks:
-
-- **Node.js**: Express, Next.js, React, Vue, Angular, NestJS, and more
-- **Python**: Django, Flask, FastAPI, and more
-- **Bun**: Bun-specific projects
-- **Go**: Go modules and frameworks
-- **Rust**: Cargo-based projects
-- **Java**: Maven/Gradle projects
-- **Ruby**: Rails and other Ruby projects
-- **PHP**: Composer-based projects
-- **.NET**: C# and F# projects
-
-Use `sdc init --auto` to automatically detect and suggest appropriate templates.
-
-### Conflict Detection
-
-When merging configurations, sdc can detect potential conflicts:
-
-- Version mismatches between templates
-- Conflicting environment variables
-- Incompatible features
-- Port conflicts
-- Extension conflicts
-
-Conflicts are reported with severity levels (error, warning, info) and suggested resolutions.
-
-### Remote Template Repositories
-
-Teams can share templates via Git repositories:
-
-```bash
-# Add team template repository
-sdc repo-template add company-templates https://github.com/company/devcontainer-templates.git
-
-# Sync to get latest templates
-sdc repo-template sync
-
-# Use templates from the repository
-sdc init --template company-templates/backend-service
-```
+1. **Base Templates** - Reusable devcontainer configurations stored globally
+2. **User Customizations** - Personal dotfiles/shell config applied to all containers
+3. **Project Config** - Per-project extensions, ports, env vars, etc.
+4. **Merging** - `sdc update` combines template + user customizations + project config
+5. **Syncing** - `sdc sync` propagates template changes to all projects
 
 ## Development
 
 ```bash
-# Clone the repository
 git clone https://github.com/your-org/shared-dev-containers.git
 cd shared-dev-containers
-
-# Install dependencies
 bun install
-
-# Run in development
-bun run dev
-
-# Run with arguments
-bun run dev -- init --global
-
-# Build for Bun
-bun run build
-
-# Build for Node.js
-npm run build:node
-
-# Run tests
-bun test
-
-# Run tests with Node.js
-npm run test:node
-
-# Lint code
-npm run lint
-
-# Format code
-npm run format
-```
-
-### Project Structure
-
-```
-src/
-├── cli.ts              # Main CLI entry point
-├── index.ts            # Library exports
-├── commands/           # Command implementations
-│   ├── init.ts         # Initialize configurations
-│   ├── scaffold.ts     # Create new projects
-│   ├── sync.ts         # Sync projects to templates
-│   ├── template.ts     # Manage local templates
-│   ├── repo-template.ts # Manage remote repositories
-│   └── wizard.ts       # Interactive setup
-├── utils/              # Utility functions
-│   ├── analyzer.ts     # Project type detection
-│   ├── config.ts       # Configuration management
-│   ├── conflict-detector.ts # Conflict detection
-│   ├── diff.ts         # Diff generation
-│   ├── git.ts          # Git operations
-│   ├── merge.ts        # Config merging
-│   └── prompts.ts      # User prompts
-├── templates/          # Built-in template definitions
-│   ├── base.json
-│   ├── node.json
-│   ├── bun.json
-│   ├── python.json
-│   └── claude-zsh.json
-└── types/              # TypeScript type definitions
-    └── index.ts
+bun run dev                   # Run in development
+bun run build                 # Build for Bun
+npm run build:node            # Build for Node.js
+bun test                      # Run tests
 ```
 
 ## License
