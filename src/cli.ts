@@ -20,6 +20,16 @@ import {
   updateRemoteRepository,
   configureRemoteSettings,
 } from "./commands/repo-template.js";
+import {
+  setDotfilesRepo,
+  removeDotfilesRepo,
+  setShellConfig,
+  removeShellConfig,
+  setEnvVar,
+  removeEnvVar,
+  showCustomizations,
+  clearCustomizations,
+} from "./commands/customize.js";
 import { createBaseConfig } from "./utils/merge.js";
 import { loadGlobalConfig } from "./utils/config.js";
 import { formatDiffForConsole, formatDiffSummary } from "./utils/diff.js";
@@ -87,6 +97,7 @@ function isSubcommand(command: string, arg: string): boolean {
     sync: ["check"],
     repo: ["add", "remove", "list", "sync", "get", "update", "config"],
     validate: ["fix", "all"],
+    customize: ["dotfiles", "shell", "env", "show", "clear"],
   };
 
   return subcommands[command]?.includes(arg) ?? false;
@@ -154,6 +165,19 @@ COMMANDS:
       --auto-sync <bool>   Enable/disable auto-sync
       --default-interval <h> Default sync interval in hours
 
+  customize <subcommand>   Manage user customizations for devcontainers
+    dotfiles <repo-url>    Set dotfiles repository
+      --target <path>      Target path in container (default: ~)
+      --install <cmd>      Install command to run after cloning
+      --remove             Remove dotfiles configuration
+    shell <path>           Set shell configuration file (e.g., ~/.zshrc)
+      --target <path>      Target path in container (default: ~/.zshrc)
+      --remove             Remove shell configuration
+    env <name> <value>     Set a custom environment variable
+      --remove             Remove the environment variable
+    show                   Show all current customizations
+    clear                  Clear all user customizations
+
   sync [directory]         Sync all projects in directory to latest template
     check                  Check which projects need syncing
     --dry-run              Preview changes without applying them
@@ -215,6 +239,25 @@ EXAMPLES:
 
   # Get a template from a remote repository
   sdc repo get company-templates node
+
+  # Configure dotfiles repository
+  sdc customize dotfiles https://github.com/user/dotfiles.git
+
+  # Configure dotfiles with install command
+  sdc customize dotfiles https://github.com/user/dotfiles.git --install "./install.sh"
+
+  # Set shell configuration from local file
+  sdc customize shell ~/.zshrc
+
+  # Add custom environment variables
+  sdc customize env EDITOR vim
+  sdc customize env MY_TOKEN secret123
+
+  # Show all current customizations
+  sdc customize show
+
+  # Clear all customizations
+  sdc customize clear
 `);
 }
 
@@ -650,6 +693,109 @@ async function main(): Promise<void> {
             console.error(`Unknown repo subcommand: ${parsed.subcommand}`);
             console.log("Available: add, remove, list, sync, get, update, config");
             process.exit(1);
+        }
+        break;
+      }
+
+      case "customize": {
+        switch (parsed.subcommand) {
+          case "dotfiles": {
+            if (parsed.flags.remove) {
+              const result = await removeDotfilesRepo();
+              console.log(result.message);
+              process.exit(result.success ? 0 : 1);
+            } else {
+              const repoUrl = parsed.positional[0];
+              if (!repoUrl) {
+                console.error("Error: Dotfiles repository URL required");
+                console.log("Usage: sdc customize dotfiles <repo-url> [--target <path>] [--install <cmd>]");
+                console.log("       sdc customize dotfiles --remove");
+                process.exit(1);
+              }
+              const result = await setDotfilesRepo(repoUrl, {
+                targetPath: parsed.flags.target as string,
+                installCommand: parsed.flags.install as string,
+              });
+              console.log(result.message);
+              process.exit(result.success ? 0 : 1);
+            }
+            break;
+          }
+
+          case "shell": {
+            if (parsed.flags.remove) {
+              const result = await removeShellConfig();
+              console.log(result.message);
+              process.exit(result.success ? 0 : 1);
+            } else {
+              const sourcePath = parsed.positional[0];
+              if (!sourcePath) {
+                console.error("Error: Shell configuration file path required");
+                console.log("Usage: sdc customize shell <path> [--target <path>]");
+                console.log("       sdc customize shell --remove");
+                process.exit(1);
+              }
+              const result = await setShellConfig(sourcePath, {
+                targetPath: parsed.flags.target as string,
+              });
+              console.log(result.message);
+              process.exit(result.success ? 0 : 1);
+            }
+            break;
+          }
+
+          case "env": {
+            if (parsed.flags.remove) {
+              const envName = parsed.positional[0];
+              if (!envName) {
+                console.error("Error: Environment variable name required");
+                console.log("Usage: sdc customize env <name> --remove");
+                process.exit(1);
+              }
+              const result = await removeEnvVar(envName);
+              console.log(result.message);
+              process.exit(result.success ? 0 : 1);
+            } else {
+              const envName = parsed.positional[0];
+              const envValue = parsed.positional[1];
+              if (!envName || envValue === undefined) {
+                console.error("Error: Environment variable name and value required");
+                console.log("Usage: sdc customize env <name> <value>");
+                console.log("       sdc customize env <name> --remove");
+                process.exit(1);
+              }
+              const result = await setEnvVar(envName, envValue);
+              console.log(result.message);
+              process.exit(result.success ? 0 : 1);
+            }
+            break;
+          }
+
+          case "show": {
+            const result = await showCustomizations();
+            console.log(result.message);
+            process.exit(result.success ? 0 : 1);
+            break;
+          }
+
+          case "clear": {
+            const result = await clearCustomizations();
+            console.log(result.message);
+            process.exit(result.success ? 0 : 1);
+            break;
+          }
+
+          default:
+            if (!parsed.subcommand) {
+              // No subcommand - show customizations by default
+              const result = await showCustomizations();
+              console.log(result.message);
+              process.exit(result.success ? 0 : 1);
+            } else {
+              console.error(`Unknown customize subcommand: ${parsed.subcommand}`);
+              console.log("Available: dotfiles, shell, env, show, clear");
+              process.exit(1);
+            }
         }
         break;
       }

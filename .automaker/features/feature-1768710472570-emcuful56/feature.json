@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "in_progress",
+  "status": "waiting_approval",
   "id": "feature-1768710472570-emcuful56",
   "descriptionHistory": [
     {
@@ -26,5 +26,61 @@
   ],
   "branchName": "main",
   "startedAt": "2026-01-18T04:27:53.979Z",
-  "updatedAt": "2026-01-18T04:27:54.149Z"
+  "updatedAt": "2026-01-18T04:37:44.135Z",
+  "planSpec": {
+    "status": "approved",
+    "version": 1,
+    "reviewedByUser": false,
+    "content": "🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/*.{json,md,sh,ts,js}\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/*config*\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/*custom*\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/projects/shared-dev-containers/src/utils/config.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/projects/shared-dev-containers/src/templates/base.json\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/projects/shared-dev-containers/src/templates/claude-zsh.json\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/projects/shared-dev-containers/src/commands/template.ts\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"src/**/*.ts\",\n  \"path\": \"/projects/shared-dev-containers\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/projects/shared-dev-containers/src/types/index.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/projects/shared-dev-containers/src/commands/init.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/projects/shared-dev-containers/src/cli.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/projects/shared-dev-containers/src/utils/merge.ts\"\n}\n\n🔧 Tool: Read\nInput: {\n  \"file_path\": \"/projects/shared-dev-containers/package.json\"\n}\n\n🔧 Tool: Glob\nInput: {\n  \"pattern\": \"**/dotfiles/**\",\n  \"path\": \"/projects/shared-dev-containers\"\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"dotfiles|zshrc|shellConfig|userCustomizations\",\n  \"path\": \"/projects/shared-dev-containers/src\"\n}\n\n🔧 Tool: Grep\nInput: {\n  \"pattern\": \"dotfiles|zshrc|shellConfig|userCustomizations\",\n  \"path\": \"/projects/shared-dev-containers/src/types/index.ts\",\n  \"output_mode\": \"content\",\n  \"-C\": 3\n}\n# Specification: User Customization System for Devcontainers\n\n## 1. **Problem**\nUsers want to integrate this devcontainer tool into their existing projects (e.g., IBM projects) while maintaining personal customizations like custom `.zshrc` files, dotfiles, and shell configurations. Currently, the type definitions hint at this capability (`userCustomizations` with `dotfiles` and `shellConfig` properties in `GlobalConfig`), but no implementation exists to actually apply these customizations when generating devcontainer configurations.\n\n## 2. **Solution**\nImplement a complete user customization system that allows users to configure personal dotfiles repositories and shell configuration files (like `.zshrc`) in their global config, and have these automatically applied when generating devcontainer configurations via the existing merge system.\n\n## 3. **Acceptance Criteria**\n- GIVEN a user has configured `userCustomizations.dotfiles` in global config, WHEN a devcontainer is generated, THEN the dotfiles feature is included in the devcontainer.json with the specified repository\n- GIVEN a user has configured `userCustomizations.shellConfig` pointing to a local .zshrc file, WHEN a devcontainer is generated, THEN a postCreateCommand is added to copy/apply the shell config\n- GIVEN a user runs `sdc customize dotfiles <repo-url>`, WHEN the command completes, THEN the global config is updated with the dotfiles repository\n- GIVEN a user runs `sdc customize shell <path-to-zshrc>`, WHEN the command completes, THEN the global config is updated with the shell config path\n- GIVEN a user runs `sdc customize show`, WHEN the command completes, THEN all current customizations are displayed\n\n## 4. **Files to Modify**\n\n| File | Purpose | Action |\n|------|---------|--------|\n| src/types/index.ts | Extend UserCustomizations type with more options | modify |\n| src/commands/customize.ts | New command module for customization management | create |\n| src/utils/merge.ts | Apply user customizations during config merge | modify |\n| src/utils/config.ts | Add helper for saving user customizations | modify |\n| src/cli.ts | Add customize command to CLI | modify |\n| scripts/setup-customizations.sh | Script to setup customizations interactively | create |\n\n## 5. **Implementation Tasks**\n\n```tasks\n- [ ] T001: Extend UserCustomizations interface with additional properties (dotfilesRepo, dotfilesTargetPath, shellConfigSource, customEnvVars) | File: src/types/index.ts\n- [ ] T002: Create customize command module with add/remove/show/clear functions for dotfiles and shell config | File: src/commands/customize.ts\n- [ ] T003: Add saveUserCustomizations helper function to config utils | File: src/utils/config.ts\n- [ ] T004: Update mergeConfigs to apply userCustomizations (dotfiles feature, shell config postCreateCommand) | File: src/utils/merge.ts\n- [ ] T005: Update createBaseConfig to incorporate user customizations from global config | File: src/utils/merge.ts\n- [ ] T006: Add customize command and subcommands to CLI (dotfiles, shell, env, show, clear) | File: src/cli.ts\n- [ ] T007: Create interactive setup script for customizations | File: scripts/setup-customizations.sh\n```\n\n## 6. **Verification**\n1. Run `sdc customize dotfiles https://github.com/user/dotfiles.git` and verify global config is updated\n2. Run `sdc customize shell ~/.zshrc` and verify global config is updated\n3. Run `sdc customize show` and verify customizations are displayed\n4. Run `sdc init` in a project and verify the generated devcontainer.json includes:\n   - The dotfiles feature with the configured repository\n   - A postCreateCommand that applies the shell configuration\n5. Run the setup script `./scripts/setup-customizations.sh` and verify interactive prompts work",
+    "generatedAt": "2026-01-18T04:28:43.059Z",
+    "tasks": [
+      {
+        "id": "T001",
+        "description": "Extend UserCustomizations interface with additional properties (dotfilesRepo, dotfilesTargetPath, shellConfigSource, customEnvVars)",
+        "filePath": "src/types/index.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T002",
+        "description": "Create customize command module with add/remove/show/clear functions for dotfiles and shell config",
+        "filePath": "src/commands/customize.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T003",
+        "description": "Add saveUserCustomizations helper function to config utils",
+        "filePath": "src/utils/config.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T004",
+        "description": "Update mergeConfigs to apply userCustomizations (dotfiles feature, shell config postCreateCommand)",
+        "filePath": "src/utils/merge.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T005",
+        "description": "Update createBaseConfig to incorporate user customizations from global config",
+        "filePath": "src/utils/merge.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T006",
+        "description": "Add customize command and subcommands to CLI (dotfiles, shell, env, show, clear)",
+        "filePath": "src/cli.ts",
+        "status": "pending"
+      },
+      {
+        "id": "T007",
+        "description": "Create interactive setup script for customizations",
+        "filePath": "scripts/setup-customizations.sh",
+        "status": "pending"
+      }
+    ],
+    "tasksTotal": 7,
+    "tasksCompleted": 7,
+    "approvedAt": "2026-01-18T04:28:43.060Z",
+    "currentTaskId": "T007"
+  },
+  "justFinishedAt": "2026-01-18T04:37:44.135Z"
 }

@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir, access } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import type { GlobalConfig, ProjectConfig, DevcontainerConfig } from "../types/index.js";
+import type { GlobalConfig, ProjectConfig, DevcontainerConfig, UserCustomizations } from "../types/index.js";
 
 /**
  * Default global configuration
@@ -75,6 +75,94 @@ export async function saveGlobalConfig(config: GlobalConfig): Promise<void> {
 
   await mkdir(configDir, { recursive: true });
   await writeFile(configPath, JSON.stringify(config, null, 2), "utf-8");
+}
+
+/**
+ * Save user customizations to the global configuration
+ *
+ * This helper loads the current global config, merges the provided customizations,
+ * and saves the updated config. Use this instead of manually loading/saving when
+ * only updating user customizations.
+ *
+ * @param customizations - Partial UserCustomizations to merge with existing ones
+ * @param options - Options for how to handle the update
+ * @param options.replace - If true, replace all customizations instead of merging (default: false)
+ * @returns The updated UserCustomizations object
+ */
+export async function saveUserCustomizations(
+  customizations: Partial<UserCustomizations>,
+  options: { replace?: boolean } = {}
+): Promise<UserCustomizations> {
+  const globalConfig = await loadGlobalConfig();
+
+  let updatedCustomizations: UserCustomizations;
+
+  if (options.replace) {
+    // Replace mode: use provided customizations directly
+    updatedCustomizations = customizations as UserCustomizations;
+  } else {
+    // Merge mode: deep merge with existing customizations
+    const existingCustomizations = globalConfig.userCustomizations || {};
+
+    // Handle customEnvVars specially - merge the nested object
+    const mergedEnvVars = {
+      ...existingCustomizations.customEnvVars,
+      ...customizations.customEnvVars,
+    };
+
+    updatedCustomizations = {
+      ...existingCustomizations,
+      ...customizations,
+    };
+
+    // Only include customEnvVars if there are any
+    if (Object.keys(mergedEnvVars).length > 0) {
+      updatedCustomizations.customEnvVars = mergedEnvVars;
+    } else if (customizations.customEnvVars === undefined && existingCustomizations.customEnvVars === undefined) {
+      // Neither had envVars, don't add empty object
+      delete updatedCustomizations.customEnvVars;
+    }
+  }
+
+  const updatedConfig: GlobalConfig = {
+    ...globalConfig,
+    userCustomizations: updatedCustomizations,
+  };
+
+  await saveGlobalConfig(updatedConfig);
+
+  return updatedCustomizations;
+}
+
+/**
+ * Get the current user customizations from global config
+ *
+ * @returns The current UserCustomizations or an empty object if none exist
+ */
+export async function getUserCustomizations(): Promise<UserCustomizations> {
+  const globalConfig = await loadGlobalConfig();
+  return globalConfig.userCustomizations || {};
+}
+
+/**
+ * Clear all user customizations from global config
+ *
+ * @returns true if customizations were cleared, false if there were none
+ */
+export async function clearUserCustomizations(): Promise<boolean> {
+  const globalConfig = await loadGlobalConfig();
+
+  if (!globalConfig.userCustomizations || Object.keys(globalConfig.userCustomizations).length === 0) {
+    return false;
+  }
+
+  const updatedConfig: GlobalConfig = {
+    ...globalConfig,
+    userCustomizations: {},
+  };
+
+  await saveGlobalConfig(updatedConfig);
+  return true;
 }
 
 /**

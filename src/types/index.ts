@@ -59,6 +59,28 @@ export interface ProjectConfig {
 }
 
 /**
+ * User customizations for devcontainer configuration
+ */
+export interface UserCustomizations {
+  /** @deprecated Use dotfilesRepo instead. Legacy dotfiles repository URL */
+  dotfiles?: string;
+  /** @deprecated Use shellConfigSource instead. Legacy shell config path */
+  shellConfig?: string;
+  /** Git repository URL for dotfiles (e.g., https://github.com/user/dotfiles.git) */
+  dotfilesRepo?: string;
+  /** Target path where dotfiles should be installed in the container (defaults to ~) */
+  dotfilesTargetPath?: string;
+  /** Install command to run after cloning dotfiles (defaults to install.sh if it exists) */
+  dotfilesInstallCommand?: string;
+  /** Local path to shell configuration file (e.g., ~/.zshrc) to copy into the container */
+  shellConfigSource?: string;
+  /** Target path for shell config in container (defaults to ~/.zshrc) */
+  shellConfigTarget?: string;
+  /** Custom environment variables to set in the container */
+  customEnvVars?: Record<string, string>;
+}
+
+/**
  * Global configuration for shared-dev-containers
  */
 export interface GlobalConfig {
@@ -69,10 +91,7 @@ export interface GlobalConfig {
   /** Default features to include */
   defaultFeatures: Record<string, Record<string, unknown>>;
   /** User customizations */
-  userCustomizations?: {
-    dotfiles?: string;
-    shellConfig?: string;
-  };
+  userCustomizations?: UserCustomizations;
   /** Remote template repositories configuration */
   remoteTemplates?: RemoteTemplatesConfig;
 }

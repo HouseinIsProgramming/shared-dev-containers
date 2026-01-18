@@ -1,4 +1,4 @@
-import type { DevcontainerConfig, ProjectConfig, GlobalConfig } from "../types/index.js";
+import type { DevcontainerConfig, ProjectConfig, GlobalConfig, UserCustomizations } from "../types/index.js";
 
 /**
  * Deep merge two objects
@@ -42,14 +42,91 @@ export function deepMerge<T extends Record<string, unknown>>(target: T, source: 
 }
 
 /**
+ * Apply user customizations to a devcontainer config
+ * This includes dotfiles feature and shell config postCreateCommand
+ */
+export function applyUserCustomizations(
+  config: DevcontainerConfig,
+  customizations: UserCustomizations
+): DevcontainerConfig {
+  const result = { ...config };
+
+  // Apply dotfiles feature (using devcontainer dotfiles feature)
+  const dotfilesRepo = customizations.dotfilesRepo || customizations.dotfiles;
+  if (dotfilesRepo) {
+    result.features = result.features || {};
+
+    // Build dotfiles feature configuration
+    const dotfilesFeatureConfig: Record<string, unknown> = {
+      repository: dotfilesRepo,
+    };
+
+    if (customizations.dotfilesTargetPath) {
+      dotfilesFeatureConfig.targetPath = customizations.dotfilesTargetPath;
+    }
+
+    if (customizations.dotfilesInstallCommand) {
+      dotfilesFeatureConfig.installCommand = customizations.dotfilesInstallCommand;
+    }
+
+    // Use the official devcontainer dotfiles feature
+    result.features["ghcr.io/devcontainers/features/common-utils:2"] = {
+      ...(result.features["ghcr.io/devcontainers/features/common-utils:2"] as Record<string, unknown> || {}),
+    };
+
+    // Dotfiles are configured at the devcontainer.json level, not as a feature
+    // We'll use the native dotfiles configuration
+    (result as unknown as Record<string, unknown>).dotfiles = {
+      repository: dotfilesRepo,
+      ...(customizations.dotfilesTargetPath && { targetPath: customizations.dotfilesTargetPath }),
+      ...(customizations.dotfilesInstallCommand && { installCommand: customizations.dotfilesInstallCommand }),
+    };
+  }
+
+  // Apply shell config via postCreateCommand
+  const shellConfigSource = customizations.shellConfigSource || customizations.shellConfig;
+  if (shellConfigSource) {
+    const shellConfigTarget = customizations.shellConfigTarget || "~/.zshrc";
+
+    // Create command to copy shell config
+    // The source file should be mounted or copied to a known location
+    const shellConfigCommand = `if [ -f "${shellConfigSource}" ]; then cp "${shellConfigSource}" "${shellConfigTarget}" && echo "Applied shell config from ${shellConfigSource}"; fi`;
+
+    // Add to postCreateCommand
+    const existingCommands = Array.isArray(result.postCreateCommand)
+      ? result.postCreateCommand
+      : result.postCreateCommand
+        ? [result.postCreateCommand]
+        : [];
+
+    result.postCreateCommand = [...existingCommands, shellConfigCommand];
+  }
+
+  // Apply custom environment variables
+  if (customizations.customEnvVars && Object.keys(customizations.customEnvVars).length > 0) {
+    result.containerEnv = {
+      ...(result.containerEnv || {}),
+      ...customizations.customEnvVars,
+    };
+  }
+
+  return result;
+}
+
+/**
  * Merge project config with base template to produce final devcontainer config
  */
 export function mergeConfigs(
   baseConfig: DevcontainerConfig,
   projectConfig: ProjectConfig,
-  _globalConfig: GlobalConfig
+  globalConfig: GlobalConfig
 ): DevcontainerConfig {
   let result = { ...baseConfig };
+
+  // Apply user customizations from global config first (lowest priority)
+  if (globalConfig.userCustomizations) {
+    result = applyUserCustomizations(result, globalConfig.userCustomizations);
+  }
 
   // Merge features
   if (projectConfig.features) {
@@ -107,9 +184,15 @@ export function mergeConfigs(
 
 /**
  * Create a base devcontainer config from global settings
+ *
+ * This function creates a base configuration that includes:
+ * - Default image and features from global config
+ * - Standard VS Code extensions and settings
+ * - User customizations (dotfiles, shell config, env vars) from global config
  */
 export function createBaseConfig(globalConfig: GlobalConfig): DevcontainerConfig {
-  return {
+  // Start with the basic configuration
+  let config: DevcontainerConfig = {
     name: "shared-dev-container",
     image: globalConfig.defaultImage,
     features: globalConfig.defaultFeatures,
@@ -127,4 +210,11 @@ export function createBaseConfig(globalConfig: GlobalConfig): DevcontainerConfig
     },
     remoteUser: "vscode",
   };
+
+  // Apply user customizations from global config if present
+  if (globalConfig.userCustomizations) {
+    config = applyUserCustomizations(config, globalConfig.userCustomizations);
+  }
+
+  return config;
 }
