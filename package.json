@@ -1,0 +1,43 @@
+{
+  "name": "shared-dev-containers",
+  "version": "0.1.0",
+  "description": "A tool for developers to have preconfigured devcontainers per project with customization support",
+  "type": "module",
+  "bin": {
+    "sdc": "./dist/cli.js",
+    "shared-dev-containers": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "bun build ./src/cli.ts --outdir ./dist --target bun && cp src/templates/*.json dist/templates/",
+    "build:node": "tsc && cp src/templates/*.json dist/templates/",
+    "dev": "bun run ./src/cli.ts",
+    "start": "bun run ./dist/cli.js",
+    "test": "bun test",
+    "test:node": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "lint": "eslint src/",
+    "format": "prettier --write src/",
+    "prepublishOnly": "npm run build:node"
+  },
+  "keywords": [
+    "devcontainer",
+    "docker",
+    "development",
+    "cli",
+    "containers"
+  ],
+  "author": "",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "bun": ">=1.0.0"
+  }
+}

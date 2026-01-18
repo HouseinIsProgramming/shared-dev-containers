@@ -1,0 +1,16 @@
+{
+  "category": "ui",
+  "description": "Enable teams to host shared templates in Git repositories that team members can sync from. Support private repos with authentication and automatic updates when the remote template changes.\n\n**Rationale:** Organizations need centralized control over development environments to ensure consistency across team members while maintaining security for proprietary configurations.",
+  "title": "Team-wide template sharing via Git repositories",
+  "status": "in_progress",
+  "id": "feature-1768709738300-1g5pk8193",
+  "descriptionHistory": [
+    {
+      "description": "Enable teams to host shared templates in Git repositories that team members can sync from. Support private repos with authentication and automatic updates when the remote template changes.\n\n**Rationale:** Organizations need centralized control over development environments to ensure consistency across team members while maintaining security for proprietary configurations.",
+      "timestamp": "2026-01-18T04:15:38.301Z",
+      "source": "initial"
+    }
+  ],
+  "startedAt": "2026-01-18T04:16:46.561Z",
+  "updatedAt": "2026-01-18T04:16:46.597Z"
+}

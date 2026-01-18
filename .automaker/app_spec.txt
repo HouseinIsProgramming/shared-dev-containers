@@ -1,0 +1,28 @@
+<project_specification>
+  <project_name>a-tool-for</project_name>
+
+  <overview>
+    a tool for developers to have a "preconfigured devcontainer per project" but still be able to customize themselves. I would like it to be able to update the project dev container, and those same updates will also be merged into the individual dev container for every dev that is working on it. I'd like them somehow to clone one docker container. They would have a base docker container, and they would clone that every time they go into a new project. That new project will also be able to add or modify things in their docker container to make it suit the project. For example, imagine a node. A project having different dependencies than another one. 
+  </overview>
+
+  <technology_stack>
+    <technology>bun</technology>
+  </technology_stack>
+
+  <core_capabilities>
+    <capability>devcontainers</capability>
+    <capability>running claude and zsh4humans in it</capability>
+    <capability>customizeable yet compatible</capability>
+  </core_capabilities>
+
+  <additional_requirements>
+    executable 
+  </additional_requirements>
+
+  <development_guidelines>
+    <guideline>Write clean, production-quality code</guideline>
+    <guideline>Include proper error handling</guideline>
+    <guideline>Write comprehensive Playwright tests</guideline>
+    <guideline>Ensure all tests pass before marking features complete</guideline>
+  </development_guidelines>
+</project_specification>

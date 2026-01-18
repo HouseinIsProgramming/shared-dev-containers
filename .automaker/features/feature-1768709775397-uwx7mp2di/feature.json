@@ -1,0 +1,17 @@
+{
+  "category": "ui",
+  "description": "Scan and flag conflicts between base template requirements and project customizations (e.g., incompatible tool versions, conflicting environment variables). Suggest resolutions automatically.\n\n**Rationale:** Users might unknowingly create conflicting configurations between base and custom settings, leading to hard-to-debug container issues. Automated detection prevents these problems proactively.",
+  "title": "Dependency conflict detection",
+  "status": "in_progress",
+  "id": "feature-1768709775397-uwx7mp2di",
+  "descriptionHistory": [
+    {
+      "description": "Scan and flag conflicts between base template requirements and project customizations (e.g., incompatible tool versions, conflicting environment variables). Suggest resolutions automatically.\n\n**Rationale:** Users might unknowingly create conflicting configurations between base and custom settings, leading to hard-to-debug container issues. Automated detection prevents these problems proactively.",
+      "timestamp": "2026-01-18T04:16:15.397Z",
+      "source": "initial"
+    }
+  ],
+  "branchName": "main",
+  "startedAt": "2026-01-18T04:17:07.464Z",
+  "updatedAt": "2026-01-18T04:17:07.544Z"
+}
