@@ -2,7 +2,7 @@
   "category": "ui",
   "description": "Add a --dry-run flag that shows what changes would be applied when syncing or merging templates without actually modifying files. Display diffs and potential conflicts.\n\n**Rationale:** Users need confidence before applying potentially breaking changes to their development environment. Preview functionality reduces anxiety and prevents accidental overwrites.",
   "title": "Dry-run and preview mode for template merging",
-  "status": "in_progress",
+  "status": "verified",
   "id": "feature-1768709742239-95hqzfzck",
   "descriptionHistory": [
     {
@@ -12,5 +12,5 @@
     }
   ],
   "startedAt": "2026-01-18T04:16:47.198Z",
-  "updatedAt": "2026-01-18T04:16:47.242Z"
+  "updatedAt": "2026-01-18T04:28:27.808Z"
 }

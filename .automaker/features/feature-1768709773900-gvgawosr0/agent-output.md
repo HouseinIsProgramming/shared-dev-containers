@@ -535,3 +535,309 @@ Input: {
   "description": "Compile TypeScript to JavaScript",
   "timeout": 60000
 }
+These errors are from the existing codebase - they are unrelated to my changes. Let me verify my specific files are correct by checking only the analyzer:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npx tsc src/utils/analyzer.ts --outDir /tmp/test --noEmit true --declaration false --skipLibCheck 2>&1",
+  "description": "Type check analyzer only",
+  "timeout": 60000
+}
+The analyzer file has some issues - let me fix them:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/utils/analyzer.ts",
+  "offset": 270,
+  "limit": 20
+}
+I see the issue - the regex flag `/s` is causing problems. Let me also check line 600:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/utils/analyzer.ts",
+  "offset": 595,
+  "limit": 15
+}
+Actually, these errors should be fine when using the project's tsconfig which targets ES2022. Let me verify by running the type check with the project config:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npx tsc --project tsconfig.json --noEmit 2>&1 | grep -E \"(analyzer|init)\" | head -20",
+  "description": "Type check analyzer with project tsconfig",
+  "timeout": 60000
+}
+No errors for the analyzer or init files. The only errors are from existing code (unused imports). Let me verify the entire build by skipping the unused check temporarily, then create a Playwright test:
+
+🔧 Tool: Bash
+Input: {
+  "command": "ls -la dist/ 2>&1 || echo \"dist directory does not exist\"",
+  "description": "Check if dist directory exists"
+}
+Good, there's a dist directory. Now let me create a simple test project structure and verify the CLI works. First, let me create a Playwright test to verify the feature:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/package.json"
+}
+I see Playwright isn't included in the project. Let me first build the project with TypeScript and then install Playwright:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npm run build:node 2>&1",
+  "description": "Build with TypeScript",
+  "timeout": 120000
+}
+The build fails due to pre-existing issues. Let me fix those first or use a workaround:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/validate.ts",
+  "limit": 30
+}
+Let me fix the existing unused import issues in the codebase:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/validate.ts",
+  "old_string": "import {\n  loadGlobalConfig,\n  loadProjectConfig,\n  loadDevcontainerConfig,\n  saveProjectConfig,\n  saveDevcontainerConfig,\n  exists,\n} from \"../utils/config.js\";",
+  "new_string": "import {\n  loadGlobalConfig,\n  loadProjectConfig,\n  saveProjectConfig,\n  saveDevcontainerConfig,\n  exists,\n} from \"../utils/config.js\";"
+}
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/validate.ts",
+  "old_string": "import type { CommandResult, ConflictDetectionResult, ProjectConfig } from \"../types/index.js\";",
+  "new_string": "import type { CommandResult, ConflictDetectionResult } from \"../types/index.js\";"
+}
+
+🔧 Tool: Bash
+Input: {
+  "command": "npm run build:node 2>&1",
+  "description": "Build with TypeScript",
+  "timeout": 120000
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "limit": 30
+}
+Let me check the rest of the CLI file to understand which imports are used:
+
+🔧 Tool: Grep
+Input: {
+  "pattern": "validateProject|autoResolveConflicts|validateAllProjects",
+  "path": "/projects/shared-dev-containers/src/cli.ts",
+  "output_mode": "content"
+}
+These imports are unused. Let me remove them:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "import { runWizard, runQuickWizard } from \"./commands/wizard.js\";\nimport { validateProject, autoResolveConflicts, validateAllProjects } from \"./commands/validate.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";",
+  "new_string": "import { runWizard, runQuickWizard } from \"./commands/wizard.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "limit": 20
+}
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "import { runWizard, runQuickWizard } from \"./commands/wizard.js\";\nimport { validateProject, autoResolveConflicts, validateAllProjects } from \"./commands/validate.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";",
+  "new_string": "import { runWizard, runQuickWizard } from \"./commands/wizard.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";"
+}
+
+🔧 Tool: Bash
+Input: {
+  "command": "head -20 /projects/shared-dev-containers/src/cli.ts",
+  "description": "View cli.ts head"
+}
+
+🔧 Tool: Bash
+Input: {
+  "command": "sed -i \"14d\" src/cli.ts",
+  "description": "Remove unused import line"
+}
+
+🔧 Tool: Bash
+Input: {
+  "command": "npm run build:node 2>&1",
+  "description": "Build with TypeScript",
+  "timeout": 120000
+}
+The build succeeded. Now let me install Playwright and create a test:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npm install --save-dev @playwright/test 2>&1",
+  "description": "Install Playwright",
+  "timeout": 120000
+}
+Now let me create a test file that tests the analyzer functionality:
+
+🔧 Tool: Write
+Input: {
+  "file_path": "/projects/shared-dev-containers/verify-analyzer.spec.ts",
+  "content": "/**\n * Temporary verification test for the project analyzer feature\n * This test verifies that the analyzer correctly detects project types\n * and suggests appropriate templates.\n */\n\nimport { test, expect } from \"@playwright/test\";\nimport { execSync } from \"node:child_process\";\nimport { mkdirSync, writeFileSync, rmSync, existsSync } from \"node:fs\";\nimport { join } from \"node:path\";\n\nconst TEST_DIR = \"/tmp/sdc-analyzer-test\";\nconst CLI_PATH = join(process.cwd(), \"dist/cli.js\");\n\n// Helper to run CLI commands\nfunction runCLI(args: string, cwd: string = TEST_DIR): string {\n  try {\n    return execSync(`node ${CLI_PATH} ${args}`, {\n      cwd,\n      encoding: \"utf-8\",\n      timeout: 30000,\n    });\n  } catch (error) {\n    const err = error as { stdout?: string; stderr?: string; message?: string };\n    return err.stdout || err.stderr || err.message || \"\";\n  }\n}\n\n// Helper to setup test directory\nfunction setupTestDir() {\n  if (existsSync(TEST_DIR)) {\n    rmSync(TEST_DIR, { recursive: true, force: true });\n  }\n  mkdirSync(TEST_DIR, { recursive: true });\n}\n\n// Helper to cleanup test directory\nfunction cleanupTestDir() {\n  if (existsSync(TEST_DIR)) {\n    rmSync(TEST_DIR, { recursive: true, force: true });\n  }\n}\n\ntest.describe(\"Project Analyzer Feature\", () => {\n  test.beforeEach(() => {\n    setupTestDir();\n  });\n\n  test.afterEach(() => {\n    cleanupTestDir();\n  });\n\n  test(\"should detect Node.js project with package.json\", async () => {\n    // Create a sample Node.js project\n    writeFileSync(\n      join(TEST_DIR, \"package.json\"),\n      JSON.stringify({\n        name: \"test-node-project\",\n        version: \"1.0.0\",\n        dependencies: {\n          express: \"^4.18.0\",\n          react: \"^18.0.0\",\n        },\n        devDependencies: {\n          typescript: \"^5.0.0\",\n        },\n      })\n    );\n\n    // Run the analyze command\n    const output = runCLI(\"analyze\");\n\n    // Verify the output contains expected information\n    expect(output).toContain(\"node\");\n    expect(output).toContain(\"Recommended Template\");\n    expect(output).toContain(\"Detected Files\");\n    expect(output).toContain(\"package.json\");\n  });\n\n  test(\"should detect Python project with requirements.txt\", async () => {\n    // Create a sample Python project\n    writeFileSync(\n      join(TEST_DIR, \"requirements.txt\"),\n      \"django>=4.0\\nflask>=2.0\\nrequests>=2.28.0\"\n    );\n\n    // Run the analyze command\n    const output = runCLI(\"analyze\");\n\n    // Verify the output contains expected information\n    expect(output).toContain(\"python\");\n    expect(output).toContain(\"Recommended Template\");\n    expect(output).toContain(\"requirements.txt\");\n  });\n\n  test(\"should detect frameworks in Node.js project\", async () => {\n    // Create a Node.js project with React and Playwright\n    writeFileSync(\n      join(TEST_DIR, \"package.json\"),\n      JSON.stringify({\n        name: \"test-react-project\",\n        version: \"1.0.0\",\n        dependencies: {\n          react: \"^18.0.0\",\n          \"react-dom\": \"^18.0.0\",\n          next: \"^14.0.0\",\n        },\n        devDependencies: {\n          \"@playwright/test\": \"^1.40.0\",\n        },\n      })\n    );\n\n    // Run the analyze command\n    const output = runCLI(\"analyze\");\n\n    // Verify the output contains framework detection\n    expect(output).toContain(\"node\");\n    expect(output).toContain(\"React\");\n    expect(output).toContain(\"Next.js\");\n    expect(output).toContain(\"Playwright\");\n  });\n\n  test(\"should initialize project with --auto flag\", async () => {\n    // Create a Node.js project\n    writeFileSync(\n      join(TEST_DIR, \"package.json\"),\n      JSON.stringify({\n        name: \"auto-init-test\",\n        version: \"1.0.0\",\n        dependencies: {\n          express: \"^4.18.0\",\n        },\n      })\n    );\n\n    // Run init with --auto flag\n    const output = runCLI(\"init --auto --name auto-test\");\n\n    // Verify auto-detection was used\n    expect(output).toContain(\"auto-detected\");\n    expect(output).toContain(\"node\");\n\n    // Verify devcontainer was created\n    expect(existsSync(join(TEST_DIR, \".devcontainer\", \"devcontainer.json\"))).toBe(true);\n    expect(existsSync(join(TEST_DIR, \".devcontainer\", \"sdc.json\"))).toBe(true);\n  });\n\n  test(\"should detect Bun project with bun.lockb\", async () => {\n    // Create a Bun project indicator (empty bun.lockb file)\n    writeFileSync(join(TEST_DIR, \"bun.lockb\"), \"\");\n    writeFileSync(\n      join(TEST_DIR, \"package.json\"),\n      JSON.stringify({\n        name: \"test-bun-project\",\n        version: \"1.0.0\",\n      })\n    );\n\n    // Run the analyze command\n    const output = runCLI(\"analyze\");\n\n    // Verify Bun detection\n    expect(output).toContain(\"bun\");\n    expect(output).toContain(\"bun.lockb\");\n  });\n\n  test(\"should detect Go project with go.mod\", async () => {\n    // Create a Go project\n    writeFileSync(\n      join(TEST_DIR, \"go.mod\"),\n      `module example.com/test\n\ngo 1.21\n\nrequire (\n\\tgithub.com/gin-gonic/gin v1.9.1\n)`\n    );\n\n    // Run the analyze command\n    const output = runCLI(\"analyze\");\n\n    // Verify Go detection\n    expect(output).toContain(\"go\");\n    expect(output).toContain(\"go.mod\");\n    expect(output).toContain(\"Gin\");\n  });\n\n  test(\"should suggest appropriate extensions for frameworks\", async () => {\n    // Create a TypeScript project with Tailwind\n    writeFileSync(\n      join(TEST_DIR, \"package.json\"),\n      JSON.stringify({\n        name: \"tailwind-project\",\n        version: \"1.0.0\",\n        devDependencies: {\n          typescript: \"^5.0.0\",\n          tailwindcss: \"^3.0.0\",\n        },\n      })\n    );\n    writeFileSync(join(TEST_DIR, \"tailwind.config.js\"), \"module.exports = {}\");\n    writeFileSync(join(TEST_DIR, \"tsconfig.json\"), \"{}\");\n\n    // Run the analyze command\n    const output = runCLI(\"analyze\");\n\n    // Verify extension suggestions\n    expect(output).toContain(\"tailwindcss\");\n    expect(output).toContain(\"TypeScript\");\n    expect(output).toContain(\"Tailwind CSS\");\n  });\n\n  test(\"should detect Django framework in Python project\", async () => {\n    // Create a Django project\n    writeFileSync(\n      join(TEST_DIR, \"requirements.txt\"),\n      \"Django>=4.0\\ndjango-rest-framework>=3.14.0\"\n    );\n    writeFileSync(join(TEST_DIR, \"manage.py\"), \"#!/usr/bin/env python\");\n\n    // Run the analyze command\n    const output = runCLI(\"analyze\");\n\n    // Verify Django detection\n    expect(output).toContain(\"python\");\n    expect(output).toContain(\"Django\");\n    expect(output).toContain(\"8000\"); // Django default port\n  });\n\n  test(\"help command should show analyze option\", async () => {\n    const output = runCLI(\"help\");\n\n    // Verify help includes analyze command\n    expect(output).toContain(\"analyze\");\n    expect(output).toContain(\"--auto\");\n  });\n});\n"
+}
+Now let me create a Playwright config file:
+
+🔧 Tool: Write
+Input: {
+  "file_path": "/projects/shared-dev-containers/playwright.config.ts",
+  "content": "import { defineConfig } from \"@playwright/test\";\n\nexport default defineConfig({\n  testDir: \".\",\n  testMatch: \"verify-analyzer.spec.ts\",\n  timeout: 60000,\n  retries: 0,\n  workers: 1,\n  reporter: \"list\",\n  use: {\n    trace: \"off\",\n  },\n});\n"
+}
+Now let me run the Playwright test:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npx playwright test verify-analyzer.spec.ts --config playwright.config.ts 2>&1",
+  "description": "Run Playwright test",
+  "timeout": 180000
+}
+All 9 tests passed. Let me clean up the test files:
+
+🔧 Tool: Bash
+Input: {
+  "command": "rm verify-analyzer.spec.ts playwright.config.ts 2>&1",
+  "description": "Remove temporary test files"
+}
+
+🔧 Tool: TodoWrite
+Input: {
+  "todos": [
+    {
+      "content": "Create analyzer.ts module for project file detection",
+      "status": "completed",
+      "activeForm": "Creating analyzer.ts module for project file detection"
+    },
+    {
+      "content": "Add new types for project analysis and recommendations",
+      "status": "completed",
+      "activeForm": "Adding new types for project analysis and recommendations"
+    },
+    {
+      "content": "Integrate analyzer into init command with --auto flag",
+      "status": "completed",
+      "activeForm": "Integrating analyzer into init command with --auto flag"
+    },
+    {
+      "content": "Update CLI to support the new analyze command",
+      "status": "completed",
+      "activeForm": "Updating CLI to support the new analyze command"
+    },
+    {
+      "content": "Export analyzer from index.ts",
+      "status": "completed",
+      "activeForm": "Exporting analyzer from index.ts"
+    },
+    {
+      "content": "Build and verify with Playwright test",
+      "status": "completed",
+      "activeForm": "Building and verifying with Playwright test"
+    }
+  ]
+}
+Let me also uninstall Playwright since it was only needed for testing:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npm uninstall @playwright/test 2>&1",
+  "description": "Uninstall Playwright"
+}
+Let me verify the final state of the implementation with a quick test of the CLI:
+
+🔧 Tool: Bash
+Input: {
+  "command": "node dist/cli.js help | head -40",
+  "description": "Verify CLI help"
+}
+
+🔧 Tool: Bash
+Input: {
+  "command": "mkdir -p /tmp/test-analyze && cd /tmp/test-analyze && echo '{\"name\":\"test\",\"dependencies\":{\"react\":\"^18.0.0\"}}' > package.json && node /projects/shared-dev-containers/dist/cli.js analyze && rm -rf /tmp/test-analyze",
+  "description": "Test analyze command"
+}
+The output shows the feature is working correctly. The exit code 1 is just due to the directory being deleted while pwd was running, but the analyzer output is correct.
+
+Let me also verify the `--auto` flag works:
+
+🔧 Tool: Bash
+Input: {
+  "command": "mkdir -p /tmp/test-auto-init && cd /tmp/test-auto-init && echo '{\"name\":\"test\",\"dependencies\":{\"express\":\"^4.18.0\",\"typescript\":\"^5.0.0\"}}' > package.json && echo '{}' > tsconfig.json && node /projects/shared-dev-containers/dist/cli.js init --auto --name my-express-app 2>&1 && ls -la .devcontainer/ && cat .devcontainer/sdc.json && cd / && rm -rf /tmp/test-auto-init",
+  "description": "Test init --auto command"
+}
+The feature is working correctly. The `--auto` flag:
+1. Detects the project type as "node"
+2. Detects frameworks: Express and TypeScript
+3. Suggests appropriate VS Code extensions: `humao.rest-client` for Express and `ms-vscode.vscode-typescript-next` for TypeScript
+4. Suggests appropriate ports: 3000 and 8080 (common Express ports)
+
+<summary>
+## Summary: Analyze project files and suggest templates
+
+### Changes Implemented
+1. **Created new analyzer module** (`src/utils/analyzer.ts`) that:
+   - Detects project types based on manifest files (package.json, requirements.txt, go.mod, Cargo.toml, etc.)
+   - Identifies frameworks (React, Vue, Angular, Next.js, Express, NestJS, Django, Flask, FastAPI, Gin, etc.)
+   - Calculates confidence scores for detections
+   - Suggests VS Code extensions based on detected frameworks
+   - Suggests ports to forward based on detected frameworks
+   - Provides human-readable reasoning for recommendations
+
+2. **Added new types** in `src/types/index.ts`:
+   - `ProjectFileDetection`: Represents detected project files
+   - `ProjectType`: Union type for supported project types (node, bun, python, go, rust, java, dotnet, ruby, php, unknown)
+   - `FrameworkDetection`: Represents detected frameworks with confidence, extensions, and ports
+   - `ProjectAnalysis`: Complete analysis result including all detections and recommendations
+
+3. **Updated init command** (`src/commands/init.ts`):
+   - Added `--auto` flag support to automatically detect project type and suggest template
+   - Auto-populates extensions, ports, and post-create commands based on detected frameworks
+   - Added new `analyzeProjectCommand` function for standalone analysis
+
+4. **Updated CLI** (`src/cli.ts`):
+   - Added `analyze [directory]` command to view project analysis without initializing
+   - Added `--auto` flag to `init` command
+   - Updated help text with new commands and examples
+
+5. **Updated exports** (`src/index.ts`):
+   - Exported new types (ProjectFileDetection, ProjectType, FrameworkDetection, ProjectAnalysis)
+   - Exported analyzer functions (analyzeProject, formatAnalysisResult, analyzeProjectCommand)
+
+### Files Modified
+- `src/utils/analyzer.ts` (new file)
+- `src/types/index.ts` (added new types)
+- `src/commands/init.ts` (added --auto support and analyzeProjectCommand)
+- `src/cli.ts` (added analyze command and --auto flag)
+- `src/index.ts` (added exports)
+- `src/commands/validate.ts` (fixed pre-existing unused import errors)
+
+### Verification Status
+- Created and ran Playwright tests with 9 test cases:
+  - ✓ Detect Node.js project with package.json
+  - ✓ Detect Python project with requirements.txt
+  - ✓ Detect frameworks in Node.js project (React, Next.js, Playwright)
+  - ✓ Initialize project with --auto flag
+  - ✓ Detect Bun project with bun.lockb
+  - ✓ Detect Go project with go.mod (including Gin framework)
+  - ✓ Suggest appropriate extensions for frameworks (TypeScript, Tailwind CSS)
+  - ✓ Detect Django framework in Python project
+  - ✓ Help command shows analyze option
+
+All 9 tests passed. Test files were deleted after verification.
+
+### Notes for Developer
+- The analyzer supports detection of 9 project types: Node.js, Bun, Python, Go, Rust, Java, .NET, Ruby, and PHP
+- Framework detection includes 14+ frameworks with associated VS Code extensions and common ports
+- The `--auto` flag on `sdc init` makes setup seamless for new projects - it automatically selects the right template and customizations
+- The `sdc analyze` command is useful for seeing what would be recommended without actually initializing
+- Confidence scores help users understand how certain the detection is
+- The feature gracefully handles projects with multiple indicators (e.g., bun.lockb with package.json)
+</summary>

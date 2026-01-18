@@ -1,0 +1,30 @@
+{
+  "category": "Uncategorized",
+  "description": "The point of this project is to use it in already existing things. For example, I have a project that I'm working on already, and I want to add webcontainers to it. I want to be able to customize my own webcontainer but still be able to use the core things of the project. For example, the project is an IBM project, so of course I need to have IBM, but I want to be able to customize my own as zshrc. \n\nSomething like that in this project already exists. If not, make a plan for it and a script for it to make it.",
+  "title": "Implement customizable WebContainer integration for existing projects",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 2,
+  "planningMode": "spec",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "in_progress",
+  "id": "feature-1768710472570-emcuful56",
+  "descriptionHistory": [
+    {
+      "description": "The point of this project is to use it in already existing things. For example, I have a project that I'm working on already, and I want to add webcontainers to it. I want to be able to customize my own webcontainer but still be able to use the core things of the project. For example, the project is an IBM project, so of course I need to have IBM, but I want to be able to customize my own as zshrc. \n\nSomething like that in this project already exists. If not, make a plan for it and a script for it to make it.",
+      "timestamp": "2026-01-18T04:27:52.604Z",
+      "source": "initial"
+    }
+  ],
+  "branchName": "main",
+  "startedAt": "2026-01-18T04:27:53.979Z",
+  "updatedAt": "2026-01-18T04:27:54.149Z"
+}

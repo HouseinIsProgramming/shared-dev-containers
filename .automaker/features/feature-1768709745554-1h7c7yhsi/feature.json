@@ -2,7 +2,7 @@
   "category": "ui",
   "description": "Provide an interactive CLI wizard that walks users through customizing templates with prompts for common options (extensions, runtime versions, ports, etc.) instead of manual JSON editing.\n\n**Rationale:** Manual JSON editing is error-prone and intimidating for less experienced developers. A guided wizard lowers the barrier to entry and reduces configuration mistakes.",
   "title": "Interactive template customization wizard",
-  "status": "in_progress",
+  "status": "verified",
   "id": "feature-1768709745554-1h7c7yhsi",
   "descriptionHistory": [
     {
@@ -12,5 +12,5 @@
     }
   ],
   "startedAt": "2026-01-18T04:16:47.682Z",
-  "updatedAt": "2026-01-18T04:16:47.726Z"
+  "updatedAt": "2026-01-18T04:25:28.564Z"
 }

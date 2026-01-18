@@ -9,7 +9,6 @@ import { join } from "node:path";
 import {
   loadGlobalConfig,
   loadProjectConfig,
-  loadDevcontainerConfig,
   saveProjectConfig,
   saveDevcontainerConfig,
   exists,
@@ -21,7 +20,7 @@ import {
   hasBlockingConflicts,
 } from "../utils/conflict-detector.js";
 import { getBuiltinTemplate } from "../templates/index.js";
-import type { CommandResult, ConflictDetectionResult, ProjectConfig } from "../types/index.js";
+import type { CommandResult, ConflictDetectionResult } from "../types/index.js";
 
 /**
  * Validate a project's configuration against its base template

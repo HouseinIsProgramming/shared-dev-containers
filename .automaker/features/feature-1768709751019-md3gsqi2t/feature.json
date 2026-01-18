@@ -2,7 +2,7 @@
   "category": "ui",
   "description": "Combine project scaffolding with devcontainer setup in a single command. Initialize git repo, install dependencies, setup devcontainer, and open in VSCode automatically based on chosen template.\n\n**Rationale:** Starting new projects requires multiple manual steps across different tools. A unified command streamlines the entire setup process from zero to development-ready environment.",
   "title": "One-command project initialization with devcontainer",
-  "status": "in_progress",
+  "status": "verified",
   "id": "feature-1768709751019-md3gsqi2t",
   "descriptionHistory": [
     {
@@ -13,5 +13,5 @@
   ],
   "branchName": "main",
   "startedAt": "2026-01-18T04:16:57.852Z",
-  "updatedAt": "2026-01-18T04:16:57.977Z"
+  "updatedAt": "2026-01-18T04:23:27.184Z"
 }

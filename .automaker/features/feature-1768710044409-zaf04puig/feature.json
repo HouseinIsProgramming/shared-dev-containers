@@ -15,7 +15,7 @@
   "dependencies": [],
   "workMode": "current",
   "titleGenerating": false,
-  "status": "in_progress",
+  "status": "waiting_approval",
   "id": "feature-1768710044409-zaf04puig",
   "descriptionHistory": [
     {
@@ -26,5 +26,6 @@
   ],
   "branchName": "main",
   "startedAt": "2026-01-18T04:20:49.440Z",
-  "updatedAt": "2026-01-18T04:20:49.577Z"
+  "updatedAt": "2026-01-18T04:22:44.745Z",
+  "justFinishedAt": "2026-01-18T04:22:44.745Z"
 }

@@ -2,7 +2,7 @@
   "category": "ui",
   "description": "Analyze project files (package.json, requirements.txt, go.mod, etc.) and automatically suggest the most appropriate base template and common customizations for that project type.\n\n**Rationale:** Choosing and configuring the right template requires knowledge of available options and best practices. Automated recommendations reduce setup time and leverage community expertise.",
   "title": "Smart template recommendations",
-  "status": "in_progress",
+  "status": "verified",
   "id": "feature-1768709773900-gvgawosr0",
   "descriptionHistory": [
     {
@@ -13,5 +13,5 @@
   ],
   "branchName": "main",
   "startedAt": "2026-01-18T04:16:58.603Z",
-  "updatedAt": "2026-01-18T04:16:58.680Z"
+  "updatedAt": "2026-01-18T04:24:30.134Z"
 }

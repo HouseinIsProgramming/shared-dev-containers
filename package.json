@@ -33,6 +33,7 @@
     "dist/**/*"
   ],
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/node": "^22.0.0",
     "typescript": "^5.7.0"
   },
