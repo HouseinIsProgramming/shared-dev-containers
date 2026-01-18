@@ -14,7 +14,8 @@ import {
 } from "../utils/config.js";
 import { createBaseConfig, mergeConfigs } from "../utils/merge.js";
 import { createFileDiff, hasChanges } from "../utils/diff.js";
-import type { ProjectConfig, CommandResult, DryRunOptions, DryRunResult, FileDiff } from "../types/index.js";
+import { analyzeProject, formatAnalysisResult } from "../utils/analyzer.js";
+import type { ProjectConfig, CommandResult, DryRunOptions, DryRunResult, ProjectAnalysis } from "../types/index.js";
 
 /**
  * Initialize global shared-dev-containers configuration
@@ -54,7 +55,7 @@ export async function initGlobal(): Promise<CommandResult> {
  */
 export async function initProject(
   projectDir: string,
-  options: { name?: string; template?: string } = {}
+  options: { name?: string; template?: string; auto?: boolean } = {}
 ): Promise<CommandResult> {
   const devcontainerDir = join(projectDir, ".devcontainer");
 
@@ -70,16 +71,31 @@ export async function initProject(
     // Load global config
     const globalConfig = await loadGlobalConfig();
 
+    // Auto-detect project type if --auto flag is set and no template is specified
+    let analysis: ProjectAnalysis | undefined;
+    let template = options.template;
+    let suggestedExtensions: string[] = [];
+    let suggestedPorts: number[] = [];
+    let suggestedCommands: string[] = [];
+
+    if (options.auto && !options.template) {
+      analysis = await analyzeProject(projectDir);
+      template = analysis.recommendedTemplate;
+      suggestedExtensions = analysis.suggestedCustomizations.extensions || [];
+      suggestedPorts = analysis.suggestedCustomizations.ports || [];
+      suggestedCommands = analysis.suggestedCustomizations.postCreateCommands || [];
+    }
+
     // Create project config
     const projectName = options.name || projectDir.split("/").pop() || "project";
     const projectConfig: ProjectConfig = {
       name: projectName,
-      extends: options.template || "base",
+      extends: template || "base",
       features: {},
-      extensions: [],
+      extensions: suggestedExtensions,
       env: {},
-      ports: [],
-      postCreateCommands: [],
+      ports: suggestedPorts,
+      postCreateCommands: suggestedCommands,
     };
 
     // Create devcontainer directory
@@ -93,15 +109,43 @@ export async function initProject(
     const mergedConfig = mergeConfigs(baseConfig, projectConfig, globalConfig);
     await saveDevcontainerConfig(projectDir, mergedConfig);
 
+    // Build result message
+    let message = `Initialized project "${projectName}" with shared devcontainer`;
+    if (analysis) {
+      message += ` (auto-detected: ${analysis.projectType}, template: ${analysis.recommendedTemplate})`;
+    }
+
     return {
       success: true,
-      message: `Initialized project "${projectName}" with shared devcontainer`,
-      data: { projectDir, devcontainerDir },
+      message,
+      data: { projectDir, devcontainerDir, analysis },
     };
   } catch (error) {
     return {
       success: false,
       message: `Failed to initialize project: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
+/**
+ * Analyze a project and suggest the best template and customizations
+ */
+export async function analyzeProjectCommand(
+  projectDir: string
+): Promise<CommandResult<{ analysis: ProjectAnalysis }>> {
+  try {
+    const analysis = await analyzeProject(projectDir);
+
+    return {
+      success: true,
+      message: formatAnalysisResult(analysis),
+      data: { analysis },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Failed to analyze project: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }

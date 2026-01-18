@@ -370,3 +370,140 @@ Input: {
   "new_string": "import { readdir } from \"node:fs/promises\";\nimport { join } from \"node:path\";\nimport { loadProjectConfig, exists } from \"../utils/config.js\";\nimport { updateProject } from \"./init.js\";\nimport type { CommandResult, DryRunOptions, DryRunResult } from \"../types/index.js\";"
 }
 Now let me update the `syncProjects` and `syncDirectory` functions:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/sync.ts",
+  "old_string": "/**\n * Sync result for a single project\n */\ninterface ProjectSyncResult {\n  project: string;\n  path: string;\n  success: boolean;\n  message: string;\n}\n\n/**\n * Sync all projects in a directory to use the latest base template\n */\nexport async function syncProjects(rootDir: string): Promise<CommandResult> {\n  try {\n    const results: ProjectSyncResult[] = [];\n    await syncDirectory(rootDir, results);\n\n    const successCount = results.filter((r) => r.success).length;\n    const failCount = results.filter((r) => !r.success).length;\n\n    return {\n      success: failCount === 0,\n      message: `Synced ${successCount} project(s), ${failCount} failed`,\n      data: { results },\n    };\n  } catch (error) {\n    return {\n      success: false,\n      message: `Failed to sync projects: ${error instanceof Error ? error.message : String(error)}`,\n    };\n  }\n}\n\n/**\n * Recursively find and sync projects in a directory\n */\nasync function syncDirectory(\n  dir: string,\n  results: ProjectSyncResult[],\n  maxDepth: number = 3,\n  currentDepth: number = 0\n): Promise<void> {\n  if (currentDepth > maxDepth) {\n    return;\n  }\n\n  // Check if this directory is a project with sdc.json\n  const sdcConfigPath = join(dir, \".devcontainer\", \"sdc.json\");\n  if (await exists(sdcConfigPath)) {\n    const projectConfig = await loadProjectConfig(dir);\n    const projectName = projectConfig?.name || dir.split(\"/\").pop() || \"unknown\";\n\n    const result = await updateProject(dir);\n    results.push({\n      project: projectName,\n      path: dir,\n      success: result.success,\n      message: result.message,\n    });\n    return; // Don't recurse into projects\n  }\n\n  // Recursively check subdirectories\n  try {\n    const entries = await readdir(dir, { withFileTypes: true });\n    for (const entry of entries) {\n      if (\n        entry.isDirectory() &&\n        !entry.name.startsWith(\".\") &&\n        entry.name !== \"node_modules\"\n      ) {\n        await syncDirectory(join(dir, entry.name), results, maxDepth, currentDepth + 1);\n      }\n    }\n  } catch {\n    // Ignore directories we can't read\n  }\n}",
+  "new_string": "/**\n * Sync result for a single project\n */\ninterface ProjectSyncResult {\n  project: string;\n  path: string;\n  success: boolean;\n  message: string;\n  dryRunResult?: DryRunResult;\n}\n\n/**\n * Sync all projects in a directory to use the latest base template\n */\nexport async function syncProjects(\n  rootDir: string,\n  options: DryRunOptions = {}\n): Promise<CommandResult> {\n  try {\n    const results: ProjectSyncResult[] = [];\n    await syncDirectory(rootDir, results, options, 3, 0);\n\n    const successCount = results.filter((r) => r.success).length;\n    const failCount = results.filter((r) => !r.success).length;\n\n    if (options.dryRun) {\n      const wouldChangeCount = results.filter(\n        (r) => r.dryRunResult?.wouldChange\n      ).length;\n      return {\n        success: true,\n        message: `[DRY-RUN] Would sync ${results.length} project(s), ${wouldChangeCount} would change`,\n        data: {\n          dryRun: true,\n          results,\n          wouldChange: wouldChangeCount,\n          totalProjects: results.length,\n        },\n      };\n    }\n\n    return {\n      success: failCount === 0,\n      message: `Synced ${successCount} project(s), ${failCount} failed`,\n      data: { results },\n    };\n  } catch (error) {\n    return {\n      success: false,\n      message: `Failed to sync projects: ${error instanceof Error ? error.message : String(error)}`,\n    };\n  }\n}\n\n/**\n * Recursively find and sync projects in a directory\n */\nasync function syncDirectory(\n  dir: string,\n  results: ProjectSyncResult[],\n  options: DryRunOptions,\n  maxDepth: number = 3,\n  currentDepth: number = 0\n): Promise<void> {\n  if (currentDepth > maxDepth) {\n    return;\n  }\n\n  // Check if this directory is a project with sdc.json\n  const sdcConfigPath = join(dir, \".devcontainer\", \"sdc.json\");\n  if (await exists(sdcConfigPath)) {\n    const projectConfig = await loadProjectConfig(dir);\n    const projectName = projectConfig?.name || dir.split(\"/\").pop() || \"unknown\";\n\n    const result = await updateProject(dir, options);\n    const syncResult: ProjectSyncResult = {\n      project: projectName,\n      path: dir,\n      success: result.success,\n      message: result.message,\n    };\n\n    // If dry-run, include the dry run result\n    if (options.dryRun && result.data) {\n      const data = result.data as { dryRun?: boolean; result?: DryRunResult };\n      if (data.result) {\n        syncResult.dryRunResult = data.result;\n      }\n    }\n\n    results.push(syncResult);\n    return; // Don't recurse into projects\n  }\n\n  // Recursively check subdirectories\n  try {\n    const entries = await readdir(dir, { withFileTypes: true });\n    for (const entry of entries) {\n      if (\n        entry.isDirectory() &&\n        !entry.name.startsWith(\".\") &&\n        entry.name !== \"node_modules\"\n      ) {\n        await syncDirectory(join(dir, entry.name), results, options, maxDepth, currentDepth + 1);\n      }\n    }\n  } catch {\n    // Ignore directories we can't read\n  }\n}"
+}
+
+🔧 Tool: TodoWrite
+Input: {
+  "todos": [
+    {
+      "content": "Add DryRunResult types to types/index.ts",
+      "status": "completed",
+      "activeForm": "Adding DryRunResult types to types/index.ts"
+    },
+    {
+      "content": "Create diff utility functions in utils/diff.ts",
+      "status": "completed",
+      "activeForm": "Creating diff utility functions"
+    },
+    {
+      "content": "Modify config.ts to support dry-run option",
+      "status": "completed",
+      "activeForm": "Modifying config.ts for dry-run support"
+    },
+    {
+      "content": "Update init.ts to support dry-run for update command",
+      "status": "completed",
+      "activeForm": "Updating init.ts for dry-run support"
+    },
+    {
+      "content": "Update sync.ts to support dry-run option",
+      "status": "completed",
+      "activeForm": "Updating sync.ts for dry-run support"
+    },
+    {
+      "content": "Update cli.ts to handle --dry-run flag",
+      "status": "in_progress",
+      "activeForm": "Updating CLI to handle --dry-run flag"
+    },
+    {
+      "content": "Verify implementation with Playwright test",
+      "status": "pending",
+      "activeForm": "Verifying implementation with Playwright test"
+    }
+  ]
+}
+Now let me update the CLI to handle the `--dry-run` flag. Let me first re-read the CLI file to get the current state:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+I see the CLI has evolved. Now let me add the import for the diff utility and update the CLI to handle the `--dry-run` flag. I need to update the help section and the command handlers:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "import { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";\nimport type { GitAuthType } from \"./types/index.js\";",
+  "new_string": "import { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";\nimport { formatDiffForConsole, formatDiffSummary } from \"./utils/diff.js\";\nimport type { GitAuthType, DryRunResult, FileDiff } from \"./types/index.js\";"
+}
+Now let me update the help message to include the `--dry-run` flag:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "  update                   Update project devcontainer from base template",
+  "new_string": "  update                   Update project devcontainer from base template\n    --dry-run              Preview changes without applying them"
+}
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "  sync [directory]         Sync all projects in directory to latest template\n    check                  Check which projects need syncing",
+  "new_string": "  sync [directory]         Sync all projects in directory to latest template\n    check                  Check which projects need syncing\n    --dry-run              Preview changes without applying them"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+Now let me update the help message for sync and update the command handlers:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "  sync [directory]         Sync all projects in directory to latest template\n    check                  Check which projects need syncing\n\n  help                     Show this help message",
+  "new_string": "  sync [directory]         Sync all projects in directory to latest template\n    check                  Check which projects need syncing\n    --dry-run              Preview changes without applying them\n\n  help                     Show this help message"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+Good, I can see the CLI has been updated with some more features. Let me add the dry-run option to the help message and update the command handlers:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "  sync [directory]         Sync all projects in directory to latest template\n    check                  Check which projects need syncing\n\n  help                     Show this help message",
+  "new_string": "  sync [directory]         Sync all projects in directory to latest template\n    check                  Check which projects need syncing\n    --dry-run              Preview changes without applying them\n\n  help                     Show this help message"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+Now I can see the current state of the CLI. Let me add the sync dry-run documentation and update the command handlers to support --dry-run:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "  sync [directory]         Sync all projects in directory to latest template\n    check                  Check which projects need syncing\n\n  help                     Show this help message",
+  "new_string": "  sync [directory]         Sync all projects in directory to latest template\n    check                  Check which projects need syncing\n    --dry-run              Preview changes without applying them\n\n  help                     Show this help message"
+}
+Now let me update the update command handler to support --dry-run:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "      case \"update\": {\n        const projectDir = parsed.positional[0] || process.cwd();\n        const result = await updateProject(projectDir);\n        console.log(result.message);\n        process.exit(result.success ? 0 : 1);\n        break;\n      }",
+  "new_string": "      case \"update\": {\n        const projectDir = parsed.positional[0] || process.cwd();\n        const dryRun = parsed.flags[\"dry-run\"] === true;\n        const result = await updateProject(projectDir, { dryRun });\n        console.log(result.message);\n\n        // If dry-run mode, display the diff\n        if (dryRun && result.data) {\n          const data = result.data as { dryRun?: boolean; result?: DryRunResult };\n          if (data.result) {\n            const { diffs, wouldChange } = data.result;\n            if (wouldChange && diffs.length > 0) {\n              console.log(\"\\n--- Changes that would be applied ---\");\n              diffs.forEach((diff) => {\n                console.log(formatDiffForConsole(diff));\n              });\n              console.log(\"\\n--- Summary ---\");\n              console.log(formatDiffSummary(diffs));\n            }\n          }\n        }\n\n        process.exit(result.success ? 0 : 1);\n        break;\n      }"
+}
+Now let me update the sync command handler to support --dry-run:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "      case \"sync\": {\n        const directory = parsed.positional[0] || process.cwd();\n\n        if (parsed.subcommand === \"check\") {\n          const result = await checkSync(directory);\n          console.log(result.message);\n          const checkData = result.data as { needsSync?: Array<{ name: string; path: string }> } | undefined;\n          if (checkData?.needsSync) {\n            checkData.needsSync.forEach((p) => console.log(`  - ${p.name}: ${p.path}`));\n          }\n          process.exit(result.success ? 0 : 1);\n        } else {\n          const result = await syncProjects(directory);\n          console.log(result.message);\n          const syncData = result.data as { results?: Array<{ project: string; success: boolean; message: string }> } | undefined;\n          if (syncData?.results) {\n            syncData.results.forEach((r) => {\n              const status = r.success ? \"✓\" : \"✗\";\n              console.log(`  ${status} ${r.project}: ${r.message}`);\n            });\n          }\n          process.exit(result.success ? 0 : 1);\n        }\n        break;\n      }",
+  "new_string": "      case \"sync\": {\n        const directory = parsed.positional[0] || process.cwd();\n        const dryRun = parsed.flags[\"dry-run\"] === true;\n\n        if (parsed.subcommand === \"check\") {\n          const result = await checkSync(directory);\n          console.log(result.message);\n          const checkData = result.data as { needsSync?: Array<{ name: string; path: string }> } | undefined;\n          if (checkData?.needsSync) {\n            checkData.needsSync.forEach((p) => console.log(`  - ${p.name}: ${p.path}`));\n          }\n          process.exit(result.success ? 0 : 1);\n        } else {\n          const result = await syncProjects(directory, { dryRun });\n          console.log(result.message);\n\n          // Type for sync results with dry-run data\n          interface SyncResultWithDryRun {\n            project: string;\n            success: boolean;\n            message: string;\n            dryRunResult?: DryRunResult;\n          }\n\n          const syncData = result.data as {\n            dryRun?: boolean;\n            results?: SyncResultWithDryRun[];\n            wouldChange?: number;\n            totalProjects?: number;\n          } | undefined;\n\n          if (syncData?.results) {\n            syncData.results.forEach((r) => {\n              const status = r.success ? \"✓\" : \"✗\";\n              console.log(`  ${status} ${r.project}: ${r.message}`);\n\n              // If dry-run mode and there are changes, show diffs\n              if (dryRun && r.dryRunResult?.wouldChange && r.dryRunResult.diffs.length > 0) {\n                r.dryRunResult.diffs.forEach((diff) => {\n                  console.log(formatDiffForConsole(diff));\n                });\n                console.log(formatDiffSummary(r.dryRunResult.diffs));\n              }\n            });\n          }\n\n          // Show summary for dry-run\n          if (dryRun && syncData) {\n            console.log(`\\n[DRY-RUN] Summary: ${syncData.wouldChange || 0} of ${syncData.totalProjects || 0} projects would be updated.`);\n            console.log(\"No files were modified. Run without --dry-run to apply changes.\");\n          }\n\n          process.exit(result.success ? 0 : 1);\n        }\n        break;\n      }"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}

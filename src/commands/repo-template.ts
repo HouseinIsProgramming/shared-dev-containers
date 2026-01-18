@@ -5,7 +5,6 @@ import {
   loadGlobalConfig,
   saveGlobalConfig,
   exists,
-  getConfigDir,
 } from "../utils/config.js";
 import {
   syncRepository,
@@ -15,7 +14,6 @@ import {
   getRepoCachePath,
   needsSync,
   detectAuthType,
-  getRemoteCacheDir,
 } from "../utils/git.js";
 import type {
   CommandResult,

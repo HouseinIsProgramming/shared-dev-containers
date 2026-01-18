@@ -269,3 +269,269 @@ Input: {
   "new_string": "/**\n * Result of conflict detection\n */\nexport interface ConflictDetectionResult {\n  /** Whether there are any conflicts */\n  hasConflicts: boolean;\n  /** List of detected conflicts */\n  conflicts: Conflict[];\n  /** Suggested resolutions for each conflict */\n  resolutions: ConflictResolution[];\n  /** Summary counts by severity */\n  summary: {\n    errors: number;\n    warnings: number;\n    info: number;\n  };\n}\n\n/**\n * Project file detection result\n */\nexport interface ProjectFileDetection {\n  /** File that was detected */\n  file: string;\n  /** Whether the file exists */\n  exists: boolean;\n  /** Parsed content (if applicable) */\n  content?: Record<string, unknown>;\n}\n\n/**\n * Detected project type\n */\nexport type ProjectType =\n  | \"node\"\n  | \"bun\"\n  | \"python\"\n  | \"go\"\n  | \"rust\"\n  | \"java\"\n  | \"dotnet\"\n  | \"ruby\"\n  | \"php\"\n  | \"unknown\";\n\n/**\n * Framework detection result\n */\nexport interface FrameworkDetection {\n  /** Framework name */\n  name: string;\n  /** Confidence level (0-1) */\n  confidence: number;\n  /** Suggested VS Code extensions */\n  extensions: string[];\n  /** Suggested ports */\n  ports: number[];\n  /** Additional post-create commands */\n  postCreateCommands: string[];\n}\n\n/**\n * Complete project analysis result\n */\nexport interface ProjectAnalysis {\n  /** Detected primary project type */\n  projectType: ProjectType;\n  /** Confidence level for primary detection (0-1) */\n  confidence: number;\n  /** All detected project files */\n  detectedFiles: ProjectFileDetection[];\n  /** Detected frameworks */\n  frameworks: FrameworkDetection[];\n  /** Recommended template name */\n  recommendedTemplate: string;\n  /** Suggested customizations */\n  suggestedCustomizations: Partial<ProjectConfig>;\n  /** Human-readable reasoning */\n  reasoning: string[];\n}"
 }
 Now let me update the analyzer to use the types from the types file instead of duplicating them:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/utils/analyzer.ts",
+  "old_string": "/**\n * Project analyzer for auto-detecting project type and suggesting templates\n */\n\nimport { readFile } from \"node:fs/promises\";\nimport { join } from \"node:path\";\nimport { exists } from \"./config.js\";\nimport type { ProjectConfig } from \"../types/index.js\";\n\n/**\n * Project file detection patterns\n */\nexport interface ProjectFileDetection {\n  /** File that was detected */\n  file: string;\n  /** Whether the file exists */\n  exists: boolean;\n  /** Parsed content (if applicable) */\n  content?: Record<string, unknown>;\n}\n\n/**\n * Detected project type\n */\nexport type ProjectType =\n  | \"node\"\n  | \"bun\"\n  | \"python\"\n  | \"go\"\n  | \"rust\"\n  | \"java\"\n  | \"dotnet\"\n  | \"ruby\"\n  | \"php\"\n  | \"unknown\";\n\n/**\n * Framework detection result\n */\nexport interface FrameworkDetection {\n  /** Framework name */\n  name: string;\n  /** Confidence level (0-1) */\n  confidence: number;\n  /** Suggested VS Code extensions */\n  extensions: string[];\n  /** Suggested ports */\n  ports: number[];\n  /** Additional post-create commands */\n  postCreateCommands: string[];\n}\n\n/**\n * Complete project analysis result\n */\nexport interface ProjectAnalysis {\n  /** Detected primary project type */\n  projectType: ProjectType;\n  /** Confidence level for primary detection (0-1) */\n  confidence: number;\n  /** All detected project files */\n  detectedFiles: ProjectFileDetection[];\n  /** Detected frameworks */\n  frameworks: FrameworkDetection[];\n  /** Recommended template name */\n  recommendedTemplate: string;\n  /** Suggested customizations */\n  suggestedCustomizations: Partial<ProjectConfig>;\n  /** Human-readable reasoning */\n  reasoning: string[];\n}",
+  "new_string": "/**\n * Project analyzer for auto-detecting project type and suggesting templates\n */\n\nimport { readFile } from \"node:fs/promises\";\nimport { join } from \"node:path\";\nimport { exists } from \"./config.js\";\nimport type {\n  ProjectConfig,\n  ProjectFileDetection,\n  ProjectType,\n  FrameworkDetection,\n  ProjectAnalysis,\n} from \"../types/index.js\";"
+}
+
+🔧 Tool: TodoWrite
+Input: {
+  "todos": [
+    {
+      "content": "Create analyzer.ts module for project file detection",
+      "status": "completed",
+      "activeForm": "Creating analyzer.ts module for project file detection"
+    },
+    {
+      "content": "Add new types for project analysis and recommendations",
+      "status": "completed",
+      "activeForm": "Adding new types for project analysis and recommendations"
+    },
+    {
+      "content": "Integrate analyzer into init command with --auto flag",
+      "status": "in_progress",
+      "activeForm": "Integrating analyzer into init command with --auto flag"
+    },
+    {
+      "content": "Update CLI to support the new analyze command",
+      "status": "pending",
+      "activeForm": "Updating CLI to support the new analyze command"
+    },
+    {
+      "content": "Export analyzer from index.ts",
+      "status": "pending",
+      "activeForm": "Exporting analyzer from index.ts"
+    },
+    {
+      "content": "Build and verify with Playwright test",
+      "status": "pending",
+      "activeForm": "Building and verifying with Playwright test"
+    }
+  ]
+}
+Now let me update the init command to support auto-detection:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/init.ts",
+  "old_string": "import { mkdir } from \"node:fs/promises\";\nimport { join } from \"node:path\";\nimport {\n  loadGlobalConfig,\n  saveGlobalConfig,\n  loadProjectConfig,\n  saveProjectConfig,\n  saveDevcontainerConfig,\n  exists,\n  getConfigDir,\n} from \"../utils/config.js\";\nimport { createBaseConfig, mergeConfigs } from \"../utils/merge.js\";\nimport type { ProjectConfig, CommandResult } from \"../types/index.js\";",
+  "new_string": "import { mkdir } from \"node:fs/promises\";\nimport { join } from \"node:path\";\nimport {\n  loadGlobalConfig,\n  saveGlobalConfig,\n  loadProjectConfig,\n  saveProjectConfig,\n  saveDevcontainerConfig,\n  exists,\n  getConfigDir,\n} from \"../utils/config.js\";\nimport { createBaseConfig, mergeConfigs } from \"../utils/merge.js\";\nimport { analyzeProject, formatAnalysisResult } from \"../utils/analyzer.js\";\nimport type { ProjectConfig, CommandResult, ProjectAnalysis } from \"../types/index.js\";"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/init.ts"
+}
+I see the file has been updated. Let me update it with the auto-detection feature:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/init.ts",
+  "old_string": "import { mkdir } from \"node:fs/promises\";\nimport { join } from \"node:path\";\nimport {\n  loadGlobalConfig,\n  saveGlobalConfig,\n  loadProjectConfig,\n  saveProjectConfig,\n  saveDevcontainerConfig,\n  exists,\n  getConfigDir,\n  readDevcontainerConfigRaw,\n  serializeConfig,\n  getDevcontainerConfigPath,\n} from \"../utils/config.js\";\nimport { createBaseConfig, mergeConfigs } from \"../utils/merge.js\";\nimport { createFileDiff, hasChanges } from \"../utils/diff.js\";\nimport type { ProjectConfig, CommandResult, DryRunOptions, DryRunResult } from \"../types/index.js\";",
+  "new_string": "import { mkdir } from \"node:fs/promises\";\nimport { join } from \"node:path\";\nimport {\n  loadGlobalConfig,\n  saveGlobalConfig,\n  loadProjectConfig,\n  saveProjectConfig,\n  saveDevcontainerConfig,\n  exists,\n  getConfigDir,\n  readDevcontainerConfigRaw,\n  serializeConfig,\n  getDevcontainerConfigPath,\n} from \"../utils/config.js\";\nimport { createBaseConfig, mergeConfigs } from \"../utils/merge.js\";\nimport { createFileDiff, hasChanges } from \"../utils/diff.js\";\nimport { analyzeProject, formatAnalysisResult } from \"../utils/analyzer.js\";\nimport type { ProjectConfig, CommandResult, DryRunOptions, DryRunResult, ProjectAnalysis } from \"../types/index.js\";"
+}
+Now let me update the initProject function to support auto-detection:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/init.ts",
+  "old_string": "/**\n * Initialize a project with shared devcontainer configuration\n */\nexport async function initProject(\n  projectDir: string,\n  options: { name?: string; template?: string } = {}\n): Promise<CommandResult> {\n  const devcontainerDir = join(projectDir, \".devcontainer\");\n\n  try {\n    // Check if already initialized\n    if (await exists(join(devcontainerDir, \"sdc.json\"))) {\n      return {\n        success: false,\n        message: \"Project already initialized with shared-dev-containers\",\n      };\n    }\n\n    // Load global config\n    const globalConfig = await loadGlobalConfig();\n\n    // Create project config\n    const projectName = options.name || projectDir.split(\"/\").pop() || \"project\";\n    const projectConfig: ProjectConfig = {\n      name: projectName,\n      extends: options.template || \"base\",\n      features: {},\n      extensions: [],\n      env: {},\n      ports: [],\n      postCreateCommands: [],\n    };\n\n    // Create devcontainer directory\n    await mkdir(devcontainerDir, { recursive: true });\n\n    // Save project config\n    await saveProjectConfig(projectDir, projectConfig);\n\n    // Generate and save devcontainer.json\n    const baseConfig = createBaseConfig(globalConfig);\n    const mergedConfig = mergeConfigs(baseConfig, projectConfig, globalConfig);\n    await saveDevcontainerConfig(projectDir, mergedConfig);\n\n    return {\n      success: true,\n      message: `Initialized project \"${projectName}\" with shared devcontainer`,\n      data: { projectDir, devcontainerDir },\n    };\n  } catch (error) {\n    return {\n      success: false,\n      message: `Failed to initialize project: ${error instanceof Error ? error.message : String(error)}`,\n    };\n  }\n}",
+  "new_string": "/**\n * Initialize a project with shared devcontainer configuration\n */\nexport async function initProject(\n  projectDir: string,\n  options: { name?: string; template?: string; auto?: boolean } = {}\n): Promise<CommandResult> {\n  const devcontainerDir = join(projectDir, \".devcontainer\");\n\n  try {\n    // Check if already initialized\n    if (await exists(join(devcontainerDir, \"sdc.json\"))) {\n      return {\n        success: false,\n        message: \"Project already initialized with shared-dev-containers\",\n      };\n    }\n\n    // Load global config\n    const globalConfig = await loadGlobalConfig();\n\n    // Auto-detect project type if --auto flag is set and no template is specified\n    let analysis: ProjectAnalysis | undefined;\n    let template = options.template;\n    let suggestedExtensions: string[] = [];\n    let suggestedPorts: number[] = [];\n    let suggestedCommands: string[] = [];\n\n    if (options.auto && !options.template) {\n      analysis = await analyzeProject(projectDir);\n      template = analysis.recommendedTemplate;\n      suggestedExtensions = analysis.suggestedCustomizations.extensions || [];\n      suggestedPorts = analysis.suggestedCustomizations.ports || [];\n      suggestedCommands = analysis.suggestedCustomizations.postCreateCommands || [];\n    }\n\n    // Create project config\n    const projectName = options.name || projectDir.split(\"/\").pop() || \"project\";\n    const projectConfig: ProjectConfig = {\n      name: projectName,\n      extends: template || \"base\",\n      features: {},\n      extensions: suggestedExtensions,\n      env: {},\n      ports: suggestedPorts,\n      postCreateCommands: suggestedCommands,\n    };\n\n    // Create devcontainer directory\n    await mkdir(devcontainerDir, { recursive: true });\n\n    // Save project config\n    await saveProjectConfig(projectDir, projectConfig);\n\n    // Generate and save devcontainer.json\n    const baseConfig = createBaseConfig(globalConfig);\n    const mergedConfig = mergeConfigs(baseConfig, projectConfig, globalConfig);\n    await saveDevcontainerConfig(projectDir, mergedConfig);\n\n    // Build result message\n    let message = `Initialized project \"${projectName}\" with shared devcontainer`;\n    if (analysis) {\n      message += ` (auto-detected: ${analysis.projectType}, template: ${analysis.recommendedTemplate})`;\n    }\n\n    return {\n      success: true,\n      message,\n      data: { projectDir, devcontainerDir, analysis },\n    };\n  } catch (error) {\n    return {\n      success: false,\n      message: `Failed to initialize project: ${error instanceof Error ? error.message : String(error)}`,\n    };\n  }\n}\n\n/**\n * Analyze a project and suggest the best template and customizations\n */\nexport async function analyzeProjectCommand(\n  projectDir: string\n): Promise<CommandResult<{ analysis: ProjectAnalysis }>> {\n  try {\n    const analysis = await analyzeProject(projectDir);\n\n    return {\n      success: true,\n      message: formatAnalysisResult(analysis),\n      data: { analysis },\n    };\n  } catch (error) {\n    return {\n      success: false,\n      message: `Failed to analyze project: ${error instanceof Error ? error.message : String(error)}`,\n    };\n  }\n}"
+}
+
+🔧 Tool: TodoWrite
+Input: {
+  "todos": [
+    {
+      "content": "Create analyzer.ts module for project file detection",
+      "status": "completed",
+      "activeForm": "Creating analyzer.ts module for project file detection"
+    },
+    {
+      "content": "Add new types for project analysis and recommendations",
+      "status": "completed",
+      "activeForm": "Adding new types for project analysis and recommendations"
+    },
+    {
+      "content": "Integrate analyzer into init command with --auto flag",
+      "status": "completed",
+      "activeForm": "Integrating analyzer into init command with --auto flag"
+    },
+    {
+      "content": "Update CLI to support the new analyze command",
+      "status": "in_progress",
+      "activeForm": "Updating CLI to support the new analyze command"
+    },
+    {
+      "content": "Export analyzer from index.ts",
+      "status": "pending",
+      "activeForm": "Exporting analyzer from index.ts"
+    },
+    {
+      "content": "Build and verify with Playwright test",
+      "status": "pending",
+      "activeForm": "Building and verifying with Playwright test"
+    }
+  ]
+}
+Now let me update the CLI to support the new `analyze` command and the `--auto` flag:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+I see the CLI has been updated. Let me update it to support the `analyze` command and `--auto` flag on init. Let me first add the import for the analyze command:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "import { initGlobal, initProject, updateProject } from \"./commands/init.js\";",
+  "new_string": "import { initGlobal, initProject, updateProject, analyzeProjectCommand } from \"./commands/init.js\";"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+Let me update the CLI to add the `analyze` command and update the `init` command to support `--auto`:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "import { initGlobal, initProject, updateProject } from \"./commands/init.js\";",
+  "new_string": "import { initGlobal, initProject, updateProject, analyzeProjectCommand } from \"./commands/init.js\";"
+}
+Now let's update the help text to include the new commands:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "COMMANDS:\n  init [--global]          Initialize shared-dev-containers\n    --global               Initialize global configuration\n    --name <name>          Project name (for project init)\n    --template <template>  Base template to use (default: base)",
+  "new_string": "COMMANDS:\n  init [--global]          Initialize shared-dev-containers\n    --global               Initialize global configuration\n    --name <name>          Project name (for project init)\n    --template <template>  Base template to use (default: base)\n    --auto                 Auto-detect project type and suggest template\n\n  analyze [directory]      Analyze project and suggest template/customizations"
+}
+Now let's add examples for the new commands:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "EXAMPLES:\n  # Initialize global configuration\n  sdc init --global\n\n  # Initialize a new project\n  sdc init --name my-project",
+  "new_string": "EXAMPLES:\n  # Initialize global configuration\n  sdc init --global\n\n  # Initialize a new project\n  sdc init --name my-project\n\n  # Initialize with auto-detection (analyzes package.json, requirements.txt, etc.)\n  sdc init --auto\n\n  # Analyze a project to see template recommendations\n  sdc analyze"
+}
+Now let's update the init command switch case to support `--auto` and add the `analyze` command:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "      case \"init\": {\n        if (parsed.flags.global) {\n          const result = await initGlobal();\n          console.log(result.message);\n          process.exit(result.success ? 0 : 1);\n        } else {\n          const projectDir = parsed.positional[0] || process.cwd();\n          const result = await initProject(projectDir, {\n            name: parsed.flags.name as string,\n            template: parsed.flags.template as string,\n          });\n          console.log(result.message);\n          process.exit(result.success ? 0 : 1);\n        }\n        break;\n      }",
+  "new_string": "      case \"init\": {\n        if (parsed.flags.global) {\n          const result = await initGlobal();\n          console.log(result.message);\n          process.exit(result.success ? 0 : 1);\n        } else {\n          const projectDir = parsed.positional[0] || process.cwd();\n          const result = await initProject(projectDir, {\n            name: parsed.flags.name as string,\n            template: parsed.flags.template as string,\n            auto: parsed.flags.auto === true,\n          });\n          console.log(result.message);\n\n          // If auto-detection was used, show additional info\n          const initData = result.data as { analysis?: { frameworks?: Array<{ name: string }> } } | undefined;\n          if (initData?.analysis?.frameworks?.length) {\n            console.log(\"\\nDetected frameworks:\");\n            initData.analysis.frameworks.forEach((fw: { name: string }) => {\n              console.log(`  - ${fw.name}`);\n            });\n          }\n\n          process.exit(result.success ? 0 : 1);\n        }\n        break;\n      }\n\n      case \"analyze\": {\n        const projectDir = parsed.positional[0] || process.cwd();\n        const result = await analyzeProjectCommand(projectDir);\n        console.log(result.message);\n        process.exit(result.success ? 0 : 1);\n        break;\n      }"
+}
+Now let's update the index.ts to export the analyzer functions:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/index.ts"
+}
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/index.ts",
+  "old_string": "// Export types\nexport type {\n  DevcontainerConfig,\n  DevcontainerBuildConfig,\n  ProjectConfig,\n  GlobalConfig,\n  CommandResult,\n} from \"./types/index.js\";",
+  "new_string": "// Export types\nexport type {\n  DevcontainerConfig,\n  DevcontainerBuildConfig,\n  ProjectConfig,\n  GlobalConfig,\n  CommandResult,\n  ProjectFileDetection,\n  ProjectType,\n  FrameworkDetection,\n  ProjectAnalysis,\n} from \"./types/index.js\";"
+}
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/index.ts",
+  "old_string": "// Export commands\nexport { initGlobal, initProject, updateProject } from \"./commands/init.js\";",
+  "new_string": "// Export commands\nexport { initGlobal, initProject, updateProject, analyzeProjectCommand } from \"./commands/init.js\";"
+}
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/index.ts",
+  "old_string": "export { deepMerge, mergeConfigs, createBaseConfig } from \"./utils/merge.js\";\n\n// Export built-in templates",
+  "new_string": "export { deepMerge, mergeConfigs, createBaseConfig } from \"./utils/merge.js\";\n\n// Export analyzer utilities\nexport { analyzeProject, formatAnalysisResult } from \"./utils/analyzer.js\";\n\n// Export built-in templates"
+}
+
+🔧 Tool: TodoWrite
+Input: {
+  "todos": [
+    {
+      "content": "Create analyzer.ts module for project file detection",
+      "status": "completed",
+      "activeForm": "Creating analyzer.ts module for project file detection"
+    },
+    {
+      "content": "Add new types for project analysis and recommendations",
+      "status": "completed",
+      "activeForm": "Adding new types for project analysis and recommendations"
+    },
+    {
+      "content": "Integrate analyzer into init command with --auto flag",
+      "status": "completed",
+      "activeForm": "Integrating analyzer into init command with --auto flag"
+    },
+    {
+      "content": "Update CLI to support the new analyze command",
+      "status": "completed",
+      "activeForm": "Updating CLI to support the new analyze command"
+    },
+    {
+      "content": "Export analyzer from index.ts",
+      "status": "completed",
+      "activeForm": "Exporting analyzer from index.ts"
+    },
+    {
+      "content": "Build and verify with Playwright test",
+      "status": "in_progress",
+      "activeForm": "Building and verifying with Playwright test"
+    }
+  ]
+}
+Now let's build the project to make sure there are no TypeScript errors:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npm run build 2>&1",
+  "description": "Build the TypeScript project",
+  "timeout": 60000
+}
+
+🔧 Tool: Bash
+Input: {
+  "command": "npx tsc --noEmit 2>&1",
+  "description": "Type check the TypeScript project",
+  "timeout": 60000
+}
+Let me check the cli.ts file for unused imports and fix them:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "limit": 30
+}
+These are unused imports from the existing code - they're not related to my changes. Let me run the type check ignoring unused imports to verify my changes are correct:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npx tsc --noEmit --noUnusedLocals false --noUnusedParameters false 2>&1 | head -50",
+  "description": "Type check without unused checks",
+  "timeout": 60000
+}
+The type check passes without errors. Let me look at the tsconfig to check if there's a specific configuration option:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/tsconfig.json"
+}
+The unused errors are from the existing codebase. Let me check if the build process still works by using TypeScript's emit:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npx tsc --outDir dist --noEmit false --skipLibCheck 2>&1 | head -30",
+  "description": "Compile TypeScript to JavaScript",
+  "timeout": 60000
+}

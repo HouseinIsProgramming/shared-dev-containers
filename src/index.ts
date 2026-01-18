@@ -12,10 +12,14 @@ export type {
   ProjectConfig,
   GlobalConfig,
   CommandResult,
+  ProjectFileDetection,
+  ProjectType,
+  FrameworkDetection,
+  ProjectAnalysis,
 } from "./types/index.js";
 
 // Export commands
-export { initGlobal, initProject, updateProject } from "./commands/init.js";
+export { initGlobal, initProject, updateProject, analyzeProjectCommand } from "./commands/init.js";
 export { listTemplates, getTemplate, createTemplate, deleteTemplate } from "./commands/template.js";
 export { syncProjects, checkSync } from "./commands/sync.js";
 export { scaffoldProject, listScaffoldTemplates } from "./commands/scaffold.js";
@@ -36,6 +40,9 @@ export {
 } from "./utils/config.js";
 
 export { deepMerge, mergeConfigs, createBaseConfig } from "./utils/merge.js";
+
+// Export analyzer utilities
+export { analyzeProject, formatAnalysisResult } from "./utils/analyzer.js";
 
 // Export built-in templates
 export { BUILTIN_TEMPLATE_NAMES, getBuiltinTemplate, listBuiltinTemplates, loadBuiltinTemplates } from "./templates/index.js";

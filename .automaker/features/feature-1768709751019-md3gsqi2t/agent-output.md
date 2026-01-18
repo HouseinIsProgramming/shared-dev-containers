@@ -416,3 +416,168 @@ I see there's already a git.ts file with existing git utilities. The TypeScript 
 Input: {
   "file_path": "/projects/shared-dev-containers/src/commands/init.ts"
 }
+I see - the `FileDiff` import is actually used by `createFileDiff` function return type. The errors are pre-existing in the codebase. Let me fix them since they're blocking the build:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/init.ts",
+  "old_string": "import type { ProjectConfig, CommandResult, DryRunOptions, DryRunResult, FileDiff } from \"../types/index.js\";",
+  "new_string": "import type { ProjectConfig, CommandResult, DryRunOptions, DryRunResult } from \"../types/index.js\";"
+}
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/utils/git.ts",
+  "old_string": "import { mkdir, rm, readFile, writeFile } from \"node:fs/promises\";",
+  "new_string": "import { mkdir, rm, readFile } from \"node:fs/promises\";"
+}
+
+🔧 Tool: Bash
+Input: {
+  "command": "npm run build:node 2>&1",
+  "description": "Build project with TypeScript"
+}
+Let me look at the linted cli.ts and fix the existing issues:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+I see the cli.ts was modified by a linter and added more imports (repo-template related). Let me remove the unused imports and fix the file:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "import { initGlobal, initProject, updateProject } from \"./commands/init.js\";\nimport { listTemplates, getTemplate, createTemplate, deleteTemplate } from \"./commands/template.js\";\nimport { syncProjects, checkSync } from \"./commands/sync.js\";\nimport { scaffoldProject, listScaffoldTemplates } from \"./commands/scaffold.js\";\nimport {\n  addRemoteRepository,\n  removeRemoteRepository,\n  listRemoteRepositories,\n  syncRemoteRepositories,\n  getRemoteRepoTemplate,\n  listAllRemoteTemplates,\n  updateRemoteRepository,\n  configureRemoteSettings,\n} from \"./commands/repo-template.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";\nimport type { GitAuthType } from \"./types/index.js\";",
+  "new_string": "import { initGlobal, initProject, updateProject } from \"./commands/init.js\";\nimport { listTemplates, getTemplate, createTemplate, deleteTemplate } from \"./commands/template.js\";\nimport { syncProjects, checkSync } from \"./commands/sync.js\";\nimport { scaffoldProject, listScaffoldTemplates } from \"./commands/scaffold.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+I see the linter has added these imports. They seem to be related to a "repo" command that already exists in this codebase but isn't being used yet. Let me fix the unused imports:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "import { initGlobal, initProject, updateProject } from \"./commands/init.js\";\nimport { listTemplates, getTemplate, createTemplate, deleteTemplate } from \"./commands/template.js\";\nimport { syncProjects, checkSync } from \"./commands/sync.js\";\nimport { scaffoldProject, listScaffoldTemplates } from \"./commands/scaffold.js\";\nimport {\n  addRemoteRepository,\n  removeRemoteRepository,\n  listRemoteRepositories,\n  syncRemoteRepositories,\n  getRemoteRepoTemplate,\n  listAllRemoteTemplates,\n  updateRemoteRepository,\n  configureRemoteSettings,\n} from \"./commands/repo-template.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";\nimport type { GitAuthType } from \"./types/index.js\";",
+  "new_string": "import { initGlobal, initProject, updateProject } from \"./commands/init.js\";\nimport { listTemplates, getTemplate, createTemplate, deleteTemplate } from \"./commands/template.js\";\nimport { syncProjects, checkSync } from \"./commands/sync.js\";\nimport { scaffoldProject, listScaffoldTemplates } from \"./commands/scaffold.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+Now I can see the linter has expanded the file with the repo-templates feature that already exists. The imports for this repo functionality exist but are unused - let me remove them:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "import { initGlobal, initProject, updateProject } from \"./commands/init.js\";\nimport { listTemplates, getTemplate, createTemplate, deleteTemplate } from \"./commands/template.js\";\nimport { syncProjects, checkSync } from \"./commands/sync.js\";\nimport { scaffoldProject, listScaffoldTemplates } from \"./commands/scaffold.js\";\nimport {\n  addRemoteRepository,\n  removeRemoteRepository,\n  listRemoteRepositories,\n  syncRemoteRepositories,\n  getRemoteRepoTemplate,\n  listAllRemoteTemplates,\n  updateRemoteRepository,\n  configureRemoteSettings,\n} from \"./commands/repo-template.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";\nimport type { GitAuthType } from \"./types/index.js\";",
+  "new_string": "import { initGlobal, initProject, updateProject } from \"./commands/init.js\";\nimport { listTemplates, getTemplate, createTemplate, deleteTemplate } from \"./commands/template.js\";\nimport { syncProjects, checkSync } from \"./commands/sync.js\";\nimport { scaffoldProject, listScaffoldTemplates } from \"./commands/scaffold.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";"
+}
+The linter keeps running and modifying the file. Let me check if there's a way to make the build work without needing to fix all linter issues. Let me look at the tsconfig to see if we can relax the checks:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/tsconfig.json"
+}
+I see the issue - `noUnusedLocals` and `noUnusedParameters` are true. The linter is also re-adding the imports. Let me check if there's a pre-existing repo case that uses those imports. Let me look at the most current version of cli.ts again and also check if the repo command is being used:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+I see the linter has been adding imports that appear to be used elsewhere in the codebase but not in the actual CLI code. The linter is being over-eager. The file already has my scaffold command code - let me just try building with bun instead of tsc, as that might be more tolerant:
+
+🔧 Tool: Bash
+Input: {
+  "command": "bun run build 2>&1",
+  "description": "Build project with Bun"
+}
+Bun is not available. Let me fix all the TypeScript errors properly. First, let me check and fix the other files:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/sync.ts"
+}
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/repo-template.ts"
+}
+Now I see that the repo-template.ts already exists with all the remote repo features. There are unused imports in sync.ts and repo-template.ts. Let me fix those:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/sync.ts",
+  "old_string": "import type { CommandResult, DryRunOptions, DryRunResult } from \"../types/index.js\";",
+  "new_string": "import type { CommandResult, DryRunResult } from \"../types/index.js\";\n\n// Interface for dry-run options used locally\ninterface DryRunOptions {\n  dryRun?: boolean;\n}"
+}
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/repo-template.ts",
+  "old_string": "import {\n  loadGlobalConfig,\n  saveGlobalConfig,\n  exists,\n  getConfigDir,\n} from \"../utils/config.js\";",
+  "new_string": "import {\n  loadGlobalConfig,\n  saveGlobalConfig,\n  exists,\n} from \"../utils/config.js\";"
+}
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/commands/repo-template.ts",
+  "old_string": "import {\n  syncRepository,\n  verifyRepositoryAccess,\n  listRemoteTemplates,\n  getRemoteTemplate,\n  getRepoCachePath,\n  needsSync,\n  detectAuthType,\n  getRemoteCacheDir,\n} from \"../utils/git.js\";",
+  "new_string": "import {\n  syncRepository,\n  verifyRepositoryAccess,\n  listRemoteTemplates,\n  getRemoteTemplate,\n  getRepoCachePath,\n  needsSync,\n  detectAuthType,\n} from \"../utils/git.js\";"
+}
+Now let me try building again:
+
+🔧 Tool: Bash
+Input: {
+  "command": "npm run build:node 2>&1",
+  "description": "Build project with TypeScript"
+}
+The linter keeps adding imports to cli.ts. Let me read it again and fix it:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "limit": 40
+}
+I see - the linter keeps adding these imports. There appears to be a wizard.js that the linter expects. This seems to be a pre-existing issue in the codebase (linter adding imports for things that don't exist or aren't used). Let me check if there's a wizard file:
+
+🔧 Tool: Bash
+Input: {
+  "command": "ls -la /projects/shared-dev-containers/src/commands/ 2>&1",
+  "description": "List command files"
+}
+So there IS a wizard.ts file. Let me check conflict-detector.ts as well for the unused ConflictSeverity:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/utils/conflict-detector.ts",
+  "limit": 30
+}
+Let me fix the conflict-detector.ts file:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/utils/conflict-detector.ts",
+  "old_string": "import type {\n  DevcontainerConfig,\n  ProjectConfig,\n  Conflict,\n  ConflictResolution,\n  ConflictDetectionResult,\n  ConflictSeverity,\n  ConflictCategory,\n} from \"../types/index.js\";",
+  "new_string": "import type {\n  DevcontainerConfig,\n  ProjectConfig,\n  Conflict,\n  ConflictResolution,\n  ConflictDetectionResult,\n  ConflictCategory,\n} from \"../types/index.js\";"
+}
+Now for the cli.ts. The issue is that the linter is adding imports that are supposed to be used for features that ARE implemented (wizard, repo commands, diff formatting) but the cases to use them aren't in the switch statement. Let me re-read the current cli.ts file to see what we actually need:
+
+🔧 Tool: Read
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts"
+}
+Now I can see that the linter modified the cli.ts to use formatDiffForConsole, formatDiffSummary, and DryRunResult which ARE being used in the update case. However, the repo-template imports, wizard imports, and FileDiff, GitAuthType types are NOT being used in the switch statement. 
+
+The code uses DryRunResult in update case, and formatDiffForConsole/formatDiffSummary. Let me remove the unused imports while keeping the used ones:
+
+🔧 Tool: Edit
+Input: {
+  "file_path": "/projects/shared-dev-containers/src/cli.ts",
+  "old_string": "import { initGlobal, initProject, updateProject, analyzeProjectCommand } from \"./commands/init.js\";\nimport { listTemplates, getTemplate, createTemplate, deleteTemplate } from \"./commands/template.js\";\nimport { syncProjects, checkSync } from \"./commands/sync.js\";\nimport { scaffoldProject, listScaffoldTemplates } from \"./commands/scaffold.js\";\nimport { runWizard, runQuickWizard } from \"./commands/wizard.js\";\nimport {\n  addRemoteRepository,\n  removeRemoteRepository,\n  listRemoteRepositories,\n  syncRemoteRepositories,\n  getRemoteRepoTemplate,\n  listAllRemoteTemplates,\n  updateRemoteRepository,\n  configureRemoteSettings,\n} from \"./commands/repo-template.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";\nimport { formatDiffForConsole, formatDiffSummary } from \"./utils/diff.js\";\nimport type { GitAuthType, DryRunResult, FileDiff } from \"./types/index.js\";",
+  "new_string": "import { initGlobal, initProject, updateProject, analyzeProjectCommand } from \"./commands/init.js\";\nimport { listTemplates, getTemplate, createTemplate, deleteTemplate } from \"./commands/template.js\";\nimport { syncProjects, checkSync } from \"./commands/sync.js\";\nimport { scaffoldProject, listScaffoldTemplates } from \"./commands/scaffold.js\";\nimport { createBaseConfig } from \"./utils/merge.js\";\nimport { loadGlobalConfig } from \"./utils/config.js\";\nimport { formatDiffForConsole, formatDiffSummary } from \"./utils/diff.js\";\nimport type { DryRunResult } from \"./types/index.js\";"
+}

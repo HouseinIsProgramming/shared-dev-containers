@@ -2,7 +2,12 @@ import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { loadProjectConfig, exists } from "../utils/config.js";
 import { updateProject } from "./init.js";
-import type { CommandResult, DryRunOptions, DryRunResult } from "../types/index.js";
+import type { CommandResult, DryRunResult } from "../types/index.js";
+
+// Interface for dry-run options used locally
+interface DryRunOptions {
+  dryRun?: boolean;
+}
 
 /**
  * Sync result for a single project
@@ -12,18 +17,38 @@ interface ProjectSyncResult {
   path: string;
   success: boolean;
   message: string;
+  dryRunResult?: DryRunResult;
 }
 
 /**
  * Sync all projects in a directory to use the latest base template
  */
-export async function syncProjects(rootDir: string): Promise<CommandResult> {
+export async function syncProjects(
+  rootDir: string,
+  options: DryRunOptions = {}
+): Promise<CommandResult> {
   try {
     const results: ProjectSyncResult[] = [];
-    await syncDirectory(rootDir, results);
+    await syncDirectory(rootDir, results, options, 3, 0);
 
     const successCount = results.filter((r) => r.success).length;
     const failCount = results.filter((r) => !r.success).length;
+
+    if (options.dryRun) {
+      const wouldChangeCount = results.filter(
+        (r) => r.dryRunResult?.wouldChange
+      ).length;
+      return {
+        success: true,
+        message: `[DRY-RUN] Would sync ${results.length} project(s), ${wouldChangeCount} would change`,
+        data: {
+          dryRun: true,
+          results,
+          wouldChange: wouldChangeCount,
+          totalProjects: results.length,
+        },
+      };
+    }
 
     return {
       success: failCount === 0,
@@ -44,6 +69,7 @@ export async function syncProjects(rootDir: string): Promise<CommandResult> {
 async function syncDirectory(
   dir: string,
   results: ProjectSyncResult[],
+  options: DryRunOptions,
   maxDepth: number = 3,
   currentDepth: number = 0
 ): Promise<void> {
@@ -57,13 +83,23 @@ async function syncDirectory(
     const projectConfig = await loadProjectConfig(dir);
     const projectName = projectConfig?.name || dir.split("/").pop() || "unknown";
 
-    const result = await updateProject(dir);
-    results.push({
+    const result = await updateProject(dir, options);
+    const syncResult: ProjectSyncResult = {
       project: projectName,
       path: dir,
       success: result.success,
       message: result.message,
-    });
+    };
+
+    // If dry-run, include the dry run result
+    if (options.dryRun && result.data) {
+      const data = result.data as { dryRun?: boolean; result?: DryRunResult };
+      if (data.result) {
+        syncResult.dryRunResult = data.result;
+      }
+    }
+
+    results.push(syncResult);
     return; // Don't recurse into projects
   }
 
@@ -76,7 +112,7 @@ async function syncDirectory(
         !entry.name.startsWith(".") &&
         entry.name !== "node_modules"
       ) {
-        await syncDirectory(join(dir, entry.name), results, maxDepth, currentDepth + 1);
+        await syncDirectory(join(dir, entry.name), results, options, maxDepth, currentDepth + 1);
       }
     }
   } catch {

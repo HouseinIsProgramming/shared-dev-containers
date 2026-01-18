@@ -6,12 +6,25 @@
  * with the ability to customize while maintaining compatibility with a shared base.
  */
 
-import { initGlobal, initProject, updateProject } from "./commands/init.js";
+import { initGlobal, initProject, updateProject, analyzeProjectCommand } from "./commands/init.js";
 import { listTemplates, getTemplate, createTemplate, deleteTemplate } from "./commands/template.js";
 import { syncProjects, checkSync } from "./commands/sync.js";
 import { scaffoldProject, listScaffoldTemplates } from "./commands/scaffold.js";
+import { runWizard, runQuickWizard } from "./commands/wizard.js";
+import {
+  addRemoteRepository,
+  removeRemoteRepository,
+  listRemoteRepositories,
+  syncRemoteRepositories,
+  getRemoteRepoTemplate,
+  listAllRemoteTemplates,
+  updateRemoteRepository,
+  configureRemoteSettings,
+} from "./commands/repo-template.js";
 import { createBaseConfig } from "./utils/merge.js";
 import { loadGlobalConfig } from "./utils/config.js";
+import { formatDiffForConsole, formatDiffSummary } from "./utils/diff.js";
+import type { GitAuthType, DryRunResult, FileDiff } from "./types/index.js";
 
 const VERSION = "0.1.0";
 
@@ -73,6 +86,7 @@ function isSubcommand(command: string, arg: string): boolean {
   const subcommands: Record<string, string[]> = {
     template: ["list", "get", "create", "delete"],
     sync: ["check"],
+    repo: ["add", "remove", "list", "sync", "get", "update", "config"],
   };
 
   return subcommands[command]?.includes(arg) ?? false;
@@ -91,10 +105,17 @@ USAGE:
   sdc <command> [options]
 
 COMMANDS:
+  wizard [directory]       Interactive wizard for configuring devcontainers
+    --quick                Quick setup with minimal prompts
+    --template <template>  Pre-select template for quick mode
+
   init [--global]          Initialize shared-dev-containers
     --global               Initialize global configuration
     --name <name>          Project name (for project init)
     --template <template>  Base template to use (default: base)
+    --auto                 Auto-detect project type and suggest template
+
+  analyze [directory]      Analyze project and suggest template/customizations
 
   scaffold <directory>     Create a new project with full setup
     --name <name>          Project name
@@ -105,6 +126,7 @@ COMMANDS:
     --install-in-container Install dependencies inside container instead
 
   update                   Update project devcontainer from base template
+    --dry-run              Preview changes without applying them
 
   template <subcommand>    Manage templates
     list                   List available templates
@@ -112,18 +134,54 @@ COMMANDS:
     create <name>          Create a new template from current config
     delete <name>          Delete a template
 
+  repo <subcommand>        Manage remote Git template repositories
+    add <name> <url>       Add a remote repository
+      --branch <branch>    Branch to use (default: main)
+      --auth <type>        Auth type: ssh, https, token, none
+      --credentials <path> Path to SSH key or token file
+      --sync-interval <h>  Auto-sync interval in hours (0 = manual)
+      --templates-path <p> Subdirectory containing templates
+    remove <name>          Remove a remote repository
+    list                   List configured repositories
+    sync [name]            Sync remote repository(ies)
+    get <repo> <template>  Get template from a remote repository
+    update <name>          Update repository configuration
+      --branch <branch>    New branch to track
+      --auth <type>        New auth type
+      --credentials <path> New credentials path
+      --sync-interval <h>  New sync interval
+    config                 Configure remote template settings
+      --auto-sync <bool>   Enable/disable auto-sync
+      --default-interval <h> Default sync interval in hours
+
   sync [directory]         Sync all projects in directory to latest template
     check                  Check which projects need syncing
+    --dry-run              Preview changes without applying them
 
   help                     Show this help message
   version                  Show version
 
 EXAMPLES:
+  # Run the interactive configuration wizard
+  sdc wizard
+
+  # Quick setup with minimal prompts
+  sdc wizard --quick
+
+  # Quick setup with pre-selected template
+  sdc wizard --quick --template node
+
   # Initialize global configuration
   sdc init --global
 
   # Initialize a new project
   sdc init --name my-project
+
+  # Initialize with auto-detection (analyzes package.json, requirements.txt, etc.)
+  sdc init --auto
+
+  # Analyze a project to see template recommendations
+  sdc analyze
 
   # Scaffold a new Node.js project with full setup
   sdc scaffold ./my-app --template node --name my-app
@@ -139,6 +197,24 @@ EXAMPLES:
 
   # Sync all projects
   sdc sync ~/projects
+
+  # Add a remote Git template repository
+  sdc repo add company-templates https://github.com/company/devcontainer-templates.git
+
+  # Add a private repository with SSH authentication
+  sdc repo add private-templates git@github.com:company/private-templates.git --auth ssh
+
+  # Add a private repository with token authentication
+  sdc repo add secure-templates https://github.com/company/templates.git --auth token --credentials /path/to/token
+
+  # List all remote repositories
+  sdc repo list
+
+  # Sync all remote repositories
+  sdc repo sync
+
+  # Get a template from a remote repository
+  sdc repo get company-templates node
 `);
 }
 
@@ -184,17 +260,54 @@ async function main(): Promise<void> {
           const result = await initProject(projectDir, {
             name: parsed.flags.name as string,
             template: parsed.flags.template as string,
+            auto: parsed.flags.auto === true,
           });
           console.log(result.message);
+
+          // If auto-detection was used, show additional info
+          const initData = result.data as { analysis?: { frameworks?: Array<{ name: string }> } } | undefined;
+          if (initData?.analysis?.frameworks?.length) {
+            console.log("\nDetected frameworks:");
+            initData.analysis.frameworks.forEach((fw: { name: string }) => {
+              console.log(`  - ${fw.name}`);
+            });
+          }
+
           process.exit(result.success ? 0 : 1);
         }
         break;
       }
 
+      case "analyze": {
+        const projectDir = parsed.positional[0] || process.cwd();
+        const result = await analyzeProjectCommand(projectDir);
+        console.log(result.message);
+        process.exit(result.success ? 0 : 1);
+        break;
+      }
+
       case "update": {
         const projectDir = parsed.positional[0] || process.cwd();
-        const result = await updateProject(projectDir);
+        const dryRun = parsed.flags["dry-run"] === true;
+        const result = await updateProject(projectDir, { dryRun });
         console.log(result.message);
+
+        // If dry-run mode, display the diff
+        if (dryRun && result.data) {
+          const data = result.data as { dryRun?: boolean; result?: DryRunResult };
+          if (data.result) {
+            const { diffs, wouldChange } = data.result;
+            if (wouldChange && diffs.length > 0) {
+              console.log("\n--- Changes that would be applied ---");
+              diffs.forEach((diff) => {
+                console.log(formatDiffForConsole(diff));
+              });
+              console.log("\n--- Summary ---");
+              console.log(formatDiffSummary(diffs));
+            }
+          }
+        }
+
         process.exit(result.success ? 0 : 1);
         break;
       }

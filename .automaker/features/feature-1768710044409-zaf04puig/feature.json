@@ -1,0 +1,30 @@
+{
+  "category": "Uncategorized",
+  "description": "Add Project README Documentation\n\nCreate a comprehensive README.md file that helps users understand, install, and use the project effectively.\n\nRequirements:\n- Add a clear project title and concise description of what it does\n- Include installation/setup instructions with prerequisites\n- Provide basic usage examples or quick-start guide\n- Document any configuration options or environment variables\n- List key dependencies and system requirements\n- Add license information if applicable\n\nConsiderations:\n- Review existing code to accurately describe project functionality\n- Match the tone and detail level to the project's complexity\n- Include any build/run commands specific to the project\n- Add badges for build status, version, or coverage if CI is configured",
+  "title": "readme",
+  "images": [],
+  "imagePaths": [],
+  "textFilePaths": [],
+  "skipTests": true,
+  "model": "opus",
+  "thinkingLevel": "none",
+  "reasoningEffort": "none",
+  "priority": 1,
+  "planningMode": "skip",
+  "requirePlanApproval": false,
+  "dependencies": [],
+  "workMode": "current",
+  "titleGenerating": false,
+  "status": "in_progress",
+  "id": "feature-1768710044409-zaf04puig",
+  "descriptionHistory": [
+    {
+      "description": "Add Project README Documentation\n\nCreate a comprehensive README.md file that helps users understand, install, and use the project effectively.\n\nRequirements:\n- Add a clear project title and concise description of what it does\n- Include installation/setup instructions with prerequisites\n- Provide basic usage examples or quick-start guide\n- Document any configuration options or environment variables\n- List key dependencies and system requirements\n- Add license information if applicable\n\nConsiderations:\n- Review existing code to accurately describe project functionality\n- Match the tone and detail level to the project's complexity\n- Include any build/run commands specific to the project\n- Add badges for build status, version, or coverage if CI is configured",
+      "timestamp": "2026-01-18T04:20:44.440Z",
+      "source": "initial"
+    }
+  ],
+  "branchName": "main",
+  "startedAt": "2026-01-18T04:20:49.440Z",
+  "updatedAt": "2026-01-18T04:20:49.577Z"
+}
